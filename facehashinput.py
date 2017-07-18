@@ -7,6 +7,7 @@ from contextlib import closing
 from scipy import misc
 from random import shuffle
 import mmap
+import random
 
 
 class Reader:
@@ -83,8 +84,16 @@ class BatchProvider:
                     shuffle(self.items)
                 else:
                     return None
+            im = misc.imresize(self.items[self.current_image][1], (224, 224), interp='bilinear')
 
-            b_images.append(misc.imresize(self.items[self.current_image][1], (224, 224)))
+            #if random.random() > 0.5:
+            #    im = np.fliplr(im)
+            #im = np.roll(im, random.randint(-21, 21), 0)
+            #im = np.roll(im, random.randint(-21, 21), 1)
+            #plt.imshow(im)
+            #plt.show()
+
+            b_images.append(im)
             b_labels.append([self.items[self.current_image][0]])
 
             self.current_image += 1

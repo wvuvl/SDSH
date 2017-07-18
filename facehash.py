@@ -9,6 +9,7 @@ from facehash_net import vgg_arg_scope
 from facehash_net import vgg_19
 from facehash_net import vgg_f
 from facehash_net import loss
+from facehash_net import loss_accv
 
 slim = tf.contrib.slim
 
@@ -18,7 +19,7 @@ LEARNING_RATE_DECAY_FACTOR = 0.5  # Learning rate decay factor.
 INITIAL_LEARNING_RATE = 0.0005      # Initial learning rate.
 TOTAL_EPOCHS_COUNT = 200
 HASH_SIZE = 24
-BATCH_SIZE = 180
+BATCH_SIZE = 150
 
 if __name__ == '__main__':
     sess = tf.Session()
@@ -37,7 +38,7 @@ if __name__ == '__main__':
 
     outputs = model.net['fc8']
 
-    l = loss(outputs, t_labels, HASH_SIZE, BATCH_SIZE)
+    l = loss_accv(outputs, t_labels, HASH_SIZE, BATCH_SIZE)
 
     #lc = "vgg_19.ckpt"
     #saver = tf.train.Saver([v for v in tf.trainable_variables() if not (v.name.startswith("vgg_19/fc8"))], keep_checkpoint_every_n_hours=1.0)
@@ -82,7 +83,7 @@ if __name__ == '__main__':
 
     for i in range(int(TOTAL_EPOCHS_COUNT * num_batches_per_epoch)):
         feed_dict = bp.get_batch()
-        if i%1000 == 0:
+        if (i%1000 == 0) and i != 0:
             saver.save(sess, "F:\\tmp\\vgg\\checkpoint", global_step)
 
         summary, _ = sess.run([merged, train_step], feed_dict)

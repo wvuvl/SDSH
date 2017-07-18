@@ -293,9 +293,10 @@ class vgg_f:
             net[name] = current
 
         fcw = tf.get_variable(name='fc8/weights', shape=[4096, 24],
-                              initializer=tf.truncated_normal_initializer(stddev=0.1, dtype=tf.float32),
+                              initializer=tf.truncated_normal_initializer(stddev=0.01, dtype=tf.float32),
                               dtype=tf.float32)
-        fcb = tf.get_variable(name='fc8/biases', shape=[24], initializer=tf.constant_initializer(0.0),
+        fcb = tf.get_variable(name='fc8/biases', shape=[24],
+                              initializer=tf.truncated_normal_initializer(stddev=0.01, dtype=tf.float32),
                               dtype=tf.float32)
 
         fc8 = tf.nn.bias_add(tf.matmul(tf.reshape(net['relu7'], [-1, 4096]), fcw), fcb)
@@ -347,17 +348,97 @@ def get_meanpix(data_path):
     mean = data['normalization'][0][0][0]
     return mean
 
-def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
-    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+
+def loss_accv(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
+    #embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
-        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
-        distance = 2.0 - 2.0 * bibj
+        bibj = tf.matmul(embedding, embedding, transpose_b=True)
+        distance = bibj / 2.0
         negative_distance = tf.reshape(distance, [BATCH_SIZE, 1, BATCH_SIZE])
 
         sim = tf.equal(ids, tf.reshape(ids, [BATCH_SIZE]))
-        s = tf.cast(sim, tf.int32) * ids;
+        s = tf.cast(sim, tf.int32) * ids
         striple = tf.cast(tf.logical_and(tf.not_equal(s, tf.reshape(ids, [BATCH_SIZE, 1, 1])), sim), tf.float32)
 
-        basic_loss = striple * (distance - negative_distance + 0.2)
-        loss = tf.reduce_mean(tf.maximum(basic_loss, 0.0))
+        arg = distance - negative_distance - HASH_SIZE / 2.0
+
+        basic_loss = tf.maximum(-arg, 0) + tf.log(1.0 + tf.exp(-tf.abs(arg)))
+        loss = tf.reduce_mean(striple * basic_loss) + 0.005 * tf.reduce_mean(tf.square(tf.sign(embedding) - embedding))
         return loss
+
+
+def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
+    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    embedding_norm = 2.0 / (1.0 + tf.exp(-6.0 * embedding_norm)) - 1.0
+    with tf.name_scope('loss') as scope:
+        ids = tf.reshape(ids, [-1, 1])
+
+        with tf.name_scope('diameter_loss') as scope:
+            template = tf.reshape(tf.constant([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), [1, 10])
+            template = tf.cast(tf.equal(ids, template), tf.float32)
+
+            table = tf.reshape(template, [-1, 10, 1]) * tf.reshape(embedding_norm, [-1, 1, HASH_SIZE])
+
+            centers = tf.nn.l2_normalize(tf.reshape(tf.reduce_mean(table, 0), [10, HASH_SIZE]), 1)
+
+            table_centered = table - tf.reshape(centers, [1, 10, HASH_SIZE])
+            distances = tf.reduce_sum(tf.square(tf.norm(table_centered, axis=2)) * tf.reshape(template, [-1, 10]), 0)
+            tf.summary.image('distances', tf.reshape(distances, [1, 1, -1, 1]))
+
+            width = tf.reduce_sum(distances)
+            width /= BATCH_SIZE
+
+            diameter_loss = width
+
+        with tf.name_scope('separation_loss') as scope:
+            centers = tf.reshape(centers, [10, HASH_SIZE])
+            bibj = tf.matmul(centers, centers, transpose_b=True)
+            #distance = tf.pow(2.0 - 2.0 * bibj, 0.5)
+            energy = tf.pow(1.0 - tf.minimum(tf.pow(1.0001 - bibj, 0.5), 1.0), 2.0)
+            tf.summary.image('disimilarity', tf.reshape(energy, [1, 10, 10, 1]))
+
+            separation_loss = tf.reduce_mean(energy)
+
+        with tf.name_scope('binarisation_loss') as scope:
+            centers = tf.reshape(centers, [10, HASH_SIZE])
+
+            binarisation_loss = tf.reduce_mean(1.0 - tf.sqrt(tf.abs(centers)))
+
+        return diameter_loss + separation_loss# + binarisation_loss
+
+def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
+    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    embedding_norm = 2.0 / (1.0 + tf.exp(-6.0 * embedding_norm)) - 1.0
+    with tf.name_scope('loss') as scope:
+        ids = tf.reshape(ids, [-1, 1])
+
+        with tf.name_scope('diameter_loss') as scope:
+            template = tf.reshape(tf.constant([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), [1, 10])
+            template = tf.cast(tf.equal(ids, template), tf.float32)
+
+            table = tf.reshape(template, [-1, 10, 1]) * tf.reshape(embedding_norm, [-1, 1, HASH_SIZE])
+
+            centers = tf.nn.l2_normalize(tf.reshape(tf.reduce_mean(table, 0), [10, HASH_SIZE]), 1)
+
+            #centers = 2.0 / (1.0 + tf.exp(-6.0 * centers)) - 1.0
+
+            table_centered = table - tf.reshape(centers, [1, 10, HASH_SIZE])
+            distances = tf.reduce_sum(tf.square(tf.norm(table_centered + 1e-6, axis=2)) * tf.reshape(template, [-1, 10]), 0)
+            tf.summary.image('distances', tf.reshape(distances, [1, 1, -1, 1]))
+
+            width = tf.reduce_sum(distances)
+            width /= BATCH_SIZE
+
+            diameter_loss = width
+
+        with tf.name_scope('separation_loss') as scope:
+            centers = tf.reshape(centers, [10, HASH_SIZE])
+            bibj = tf.matmul(centers, centers, transpose_b=True)
+            #distance = tf.pow(2.0 - 2.0 * bibj, 0.5)
+            energy = tf.pow(1.0 - tf.minimum(tf.pow(1.0001 - bibj, 0.5), 1.0), 2.0)
+            tf.summary.image('disimilarity', tf.reshape(energy, [1, 10, 10, 1]))
+
+            separation_loss = tf.reduce_mean(energy)
+
+
+        return diameter_loss + separation_loss
