@@ -8,8 +8,6 @@ from datetime import datetime
 from facehash_net import vgg_f
 import time
 import tensorflow as tf
-from facehash_net import vgg_arg_scope
-from facehash_net import vgg_19
 
 HASH_SIZE = 24
 BATCH_SIZE = 80

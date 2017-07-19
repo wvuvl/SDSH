@@ -5,8 +5,6 @@ import facehashinput
 from datetime import datetime
 import pickle
 import time
-from facehash_net import vgg_arg_scope
-from facehash_net import vgg_19
 from facehash_net import vgg_f
 from facehash_net import loss
 from facehash_net import loss_accv
@@ -15,11 +13,12 @@ slim = tf.contrib.slim
 
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
 NUM_EPOCHS_PER_DECAY = 20.0      # Epochs after which learning rate decays.
-LEARNING_RATE_DECAY_FACTOR = 0.5  # Learning rate decay factor.
-INITIAL_LEARNING_RATE = 0.0005      # Initial learning rate.
-TOTAL_EPOCHS_COUNT = 200
+LEARNING_RATE_DECAY_FACTOR = 2.0 / 3.0  # Learning rate decay factor.
+INITIAL_LEARNING_RATE = 0.000225      # Initial learning rate.
+TOTAL_EPOCHS_COUNT = 100
 HASH_SIZE = 24
 BATCH_SIZE = 150
+WEIGHT_DECAY_FACTOR = 0.0011
 
 if __name__ == '__main__':
     sess = tf.Session()
@@ -31,18 +30,12 @@ if __name__ == '__main__':
     t_images, t_labels = bp.inputs()
 
     sess = tf.Session()
-    #with slim.arg_scope(vgg_arg_scope()):
-    #    outputs, end_points = vgg_19(t_images - tf.reshape([123.68, 116.779, 103.939], [1, 1, 1, 3]))
 
     model = vgg_f('imagenet-vgg-f.mat', t_images)
 
     outputs = model.net['fc8']
 
-    l = loss_accv(outputs, t_labels, HASH_SIZE, BATCH_SIZE)
-
-    #lc = "vgg_19.ckpt"
-    #saver = tf.train.Saver([v for v in tf.trainable_variables() if not (v.name.startswith("vgg_19/fc8"))], keep_checkpoint_every_n_hours=1.0)
-    #saver.restore(sess, lc)
+    l = loss_accv(outputs, t_labels, HASH_SIZE, BATCH_SIZE) + model.weight_decay * WEIGHT_DECAY_FACTOR
 
     tf.summary.image('embedding', tf.reshape(outputs, [-1, 1, HASH_SIZE, 1]))
 
@@ -62,8 +55,8 @@ if __name__ == '__main__':
                                     LEARNING_RATE_DECAY_FACTOR,
                                     staircase=True)
     tf.summary.scalar('learning_rate', lr)
-	
-    opt = tf.train.AdamOptimizer(lr)
+
+    opt = tf.train.GradientDescentOptimizer (lr)
     train_step = opt.minimize(l, global_step=global_step)
 
     _start_time = time.time()
