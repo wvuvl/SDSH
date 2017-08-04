@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 import numpy as np
+from tensorflow.contrib.tensorboard.plugins import projector
 
 import scipy.misc
 import scipy.io
@@ -113,48 +114,31 @@ def loss_accv(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
         return loss
 
 
-def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
+def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128, MARGIN=1.0):
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
-    embedding_norm = 2.0 / (1.0 + tf.exp(-6.0 * embedding_norm)) - 1.0
     with tf.name_scope('loss') as scope:
-        ids = tf.reshape(ids, [-1, 1])
+        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
+        distance = 2.0 - 2.0 * bibj
+        negative_distance = tf.reshape(distance, [BATCH_SIZE, 1, BATCH_SIZE])
 
-        with tf.name_scope('diameter_loss') as scope:
-            template = tf.reshape(tf.constant([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), [1, 10])
-            template = tf.cast(tf.equal(ids, template), tf.float32)
+        sim = tf.equal(ids, tf.reshape(ids, [BATCH_SIZE]))
 
-            table = tf.reshape(template, [-1, 10, 1]) * tf.reshape(embedding_norm, [-1, 1, HASH_SIZE])
+        #striple = tf.cast(
+        #    tf.logical_and(sim, tf.logical_not(tf.reshape(sim, [BATCH_SIZE, 1, BATCH_SIZE]))),
+        #    tf.float32) * tf.constant(np.ones((BATCH_SIZE, BATCH_SIZE), dtype=np.float32) - np.eye(BATCH_SIZE, dtype=np.float32))
+        #print(striple.shape)
 
-            centers = tf.nn.l2_normalize(tf.reshape(tf.reduce_mean(table, 0), [10, HASH_SIZE]), 1)
+        s = tf.cast(sim, tf.int32) * ids
+        striple = tf.cast(tf.logical_and(tf.not_equal(s, tf.reshape(ids, [BATCH_SIZE, 1, 1])), sim), tf.float32)
 
-            table_centered = table - tf.reshape(centers, [1, 10, HASH_SIZE])
-            distances = tf.reduce_sum(tf.square(tf.norm(table_centered, axis=2)) * tf.reshape(template, [-1, 10]), 0)
-            tf.summary.image('distances', tf.reshape(distances, [1, 1, -1, 1]))
-
-            width = tf.reduce_sum(distances)
-            width /= BATCH_SIZE
-
-            diameter_loss = width
-
-        with tf.name_scope('separation_loss') as scope:
-            centers = tf.reshape(centers, [10, HASH_SIZE])
-            bibj = tf.matmul(centers, centers, transpose_b=True)
-            #distance = tf.pow(2.0 - 2.0 * bibj, 0.5)
-            energy = tf.pow(1.0 - tf.minimum(tf.pow(1.0001 - bibj, 0.5), 1.0), 2.0)
-            tf.summary.image('disimilarity', tf.reshape(energy, [1, 10, 10, 1]))
-
-            separation_loss = tf.reduce_mean(energy)
-
-        with tf.name_scope('binarisation_loss') as scope:
-            centers = tf.reshape(centers, [10, HASH_SIZE])
-
-            binarisation_loss = tf.reduce_mean(1.0 - tf.sqrt(tf.abs(centers)))
-
-        return diameter_loss + separation_loss# + binarisation_loss
+        basic_loss = striple * tf.maximum(distance - negative_distance + MARGIN, 0.0)
+        l = tf.reduce_mean(basic_loss)
+        tf.summary.scalar('contrustive_loss', l)
+        return l
 
 def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
-    embedding_norm = 2.0 / (1.0 + tf.exp(-6.0 * embedding_norm)) - 1.0
+
     with tf.name_scope('loss') as scope:
         ids = tf.reshape(ids, [-1, 1])
 
@@ -164,12 +148,13 @@ def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
 
             table = tf.reshape(template, [-1, 10, 1]) * tf.reshape(embedding_norm, [-1, 1, HASH_SIZE])
 
+
             centers = tf.nn.l2_normalize(tf.reshape(tf.reduce_mean(table, 0), [10, HASH_SIZE]), 1)
 
-            #centers = 2.0 / (1.0 + tf.exp(-6.0 * centers)) - 1.0
-
             table_centered = table - tf.reshape(centers, [1, 10, HASH_SIZE])
+
             distances = tf.reduce_sum(tf.square(tf.norm(table_centered + 1e-6, axis=2)) * tf.reshape(template, [-1, 10]), 0)
+
             tf.summary.image('distances', tf.reshape(distances, [1, 1, -1, 1]))
 
             width = tf.reduce_sum(distances)
@@ -180,11 +165,18 @@ def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
         with tf.name_scope('separation_loss') as scope:
             centers = tf.reshape(centers, [10, HASH_SIZE])
             bibj = tf.matmul(centers, centers, transpose_b=True)
-            #distance = tf.pow(2.0 - 2.0 * bibj, 0.5)
-            energy = tf.pow(1.0 - tf.minimum(tf.pow(1.0001 - bibj, 0.5), 1.0), 2.0)
+            distance = tf.pow(0.5 + 1e-6 - bibj / 2.0, 0.5)
+
+            energy = tf.pow(1.0 - distance, 2.0)
             tf.summary.image('disimilarity', tf.reshape(energy, [1, 10, 10, 1]))
 
-            separation_loss = tf.reduce_mean(energy)
+            separation_loss = tf.reduce_mean(energy * tf.constant(np.ones((10, 10), dtype=np.float32) - np.eye(10, dtype=np.float32)))
 
+        diameter_loss *= 5.0
 
+        tf.summary.scalar('diameter_loss', diameter_loss)
+        tf.summary.scalar('separation_loss', separation_loss)
+
+        total = diameter_loss + separation_loss
+        tf.summary.scalar('total_loss', total)
         return diameter_loss + separation_loss

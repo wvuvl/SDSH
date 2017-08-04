@@ -9,7 +9,23 @@ from facehash_net import vgg_f
 import time
 
 HASH_SIZE = 24
-BATCH_SIZE = 80
+
+
+def test(items_train, items_test, b_dataset, b_test):
+    r_train = facehashinput.Reader('', items_train)
+    r_test = facehashinput.Reader('', items_test)
+
+    dataset_l = np.reshape(np.asarray(r_train.get_labels()), [-1, 1])
+    test_l = np.reshape(np.asarray(r_test.get_labels()), [-1, 1])
+
+    s = compute_s(dataset_l[:40000], dataset_l[40000:])
+    map_train = return_map(b_dataset[:40000], b_dataset[40000:], s)
+    print("Test on train" + str(map_train))
+
+    s = compute_s(dataset_l, test_l)
+    map_test = return_map(b_dataset, b_test, s)
+    print("Test on test" + str(map_test))
+    return map_train, map_test
 
 if __name__ == '__main__':
     with open('items_train.pkl', 'rb') as pkl:
@@ -21,12 +37,4 @@ if __name__ == '__main__':
     with open('b_test.pkl', 'rb') as pkl:
         b_test = pickle.load(pkl)
 
-    r_train = facehashinput.Reader('', items_train)
-    r_test = facehashinput.Reader('', items_test)
-
-    dataset_l = np.reshape(np.asarray(r_train.get_labels()), [-1, 1])
-    test_l = np.reshape(np.asarray(r_test.get_labels()), [-1, 1])
-
-    s = compute_s(dataset_l, test_l)
-    map = return_map(b_dataset, b_test, s)
-    print(map)
+    test(items_train, items_test, b_dataset, b_test)

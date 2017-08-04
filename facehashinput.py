@@ -1,5 +1,4 @@
 #! python3
-import tensorflow as tf
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,15 +62,10 @@ class BatchProvider:
         self.items = items
         self.batch_size = batch_size
         depth = 3
-        self.t_images = tf.placeholder(tf.float32, [None, 224, 224, depth])
-        self.t_labels = tf.placeholder(tf.int32, [None, 1])
 
         self.current_image = 0
         self.cycled = cycled
         self.done = False
-
-    def inputs(self):
-        return self.t_images, self.t_labels
 
     def get_batch(self):
         b_images = []
@@ -98,7 +92,7 @@ class BatchProvider:
 
             self.current_image += 1
 
-        feed_dict = {self.t_images: b_images, self.t_labels: b_labels}
+        feed_dict = {"images": b_images, "labels": b_labels}
 
         return feed_dict
 
@@ -109,7 +103,7 @@ if __name__ == '__main__':
 
     b = p.get_batch()
 
-    ims = b[p.t_images]
+    ims = b["images"]
     for im in ims:
         plt.imshow(im, interpolation='nearest')
         plt.show()
