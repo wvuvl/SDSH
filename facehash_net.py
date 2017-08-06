@@ -114,6 +114,24 @@ def loss_accv(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
         return loss
 
 
+def loss_accv_mod(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128, MARGIN=0.5):
+    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    with tf.name_scope('loss') as scope:
+        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
+        distance = bibj / 2.0
+        negative_distance = tf.reshape(distance, [BATCH_SIZE, 1, BATCH_SIZE])
+
+        sim = tf.equal(ids, tf.reshape(ids, [BATCH_SIZE]))
+        s = tf.cast(sim, tf.int32) * ids
+        striple = tf.cast(tf.logical_and(tf.not_equal(s, tf.reshape(ids, [BATCH_SIZE, 1, 1])), sim), tf.float32)
+
+        arg = 24 * (distance - negative_distance - MARGIN)
+
+        basic_loss = tf.maximum(-arg, 0) + tf.log(1.0 + tf.exp(-tf.abs(arg)))
+        loss = tf.reduce_sum(striple * basic_loss) / 303750.0 / 24.0
+        return loss
+
+
 def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128, MARGIN=1.0):
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:

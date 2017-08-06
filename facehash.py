@@ -11,6 +11,7 @@ from facehash_net import vgg_f
 from facehash_net import loss
 from facehash_net import loss2
 from facehash_net import loss_accv
+from facehash_net import loss_accv_mod
 from tensorflow.contrib.tensorboard.plugins import projector
 
 from facehash_genHashes import GenHashes
@@ -19,15 +20,15 @@ from facehash_test import test
 slim = tf.contrib.slim
 
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
-NUM_EPOCHS_PER_DECAY = 20.0      # Epochs after which learning rate decays.
+NUM_EPOCHS_PER_DECAY = 67.0      # Epochs after which learning rate decays.
 LEARNING_RATE_DECAY_FACTOR = 2.0 / 3.0  # Learning rate decay factor.
-INITIAL_LEARNING_RATE = 0.025      # Initial learning rate.
-TOTAL_EPOCHS_COUNT = 100
+INITIAL_LEARNING_RATE = 0.02      # Initial learning rate.
+TOTAL_EPOCHS_COUNT = 200
 HASH_SIZE = 24
 BATCH_SIZE = 150
 WEIGHT_DECAY_FACTOR = 5.0e-5
 
-def main(LOG_FOLDER = "F:/tmp/vgg", MARGIN=1.0):
+def main(LOG_FOLDER = "F:/tmp/vgg_accv_mod", MARGIN=1.0):
     #WEIGHT_DECAY_FACTOR = float(WEIGHT_DECAY_FACTOR)
     MARGIN = float(MARGIN)
     print("Using weightdecay: " + str(WEIGHT_DECAY_FACTOR))
@@ -55,7 +56,7 @@ def main(LOG_FOLDER = "F:/tmp/vgg", MARGIN=1.0):
     assignment = tf.assign(embedding_var, embedding_norm)
 
     weigh_decay = model.weight_decay * WEIGHT_DECAY_FACTOR
-    l = loss(outputs, t_labels, HASH_SIZE, BATCH_SIZE, MARGIN) + weigh_decay
+    l = loss_accv_mod(outputs, t_labels, HASH_SIZE, BATCH_SIZE, MARGIN) + weigh_decay
 
     tf.summary.scalar('weigh_decay', weigh_decay)
     tf.summary.scalar('total_loss_plus_weigh_decay', l)
@@ -77,8 +78,8 @@ def main(LOG_FOLDER = "F:/tmp/vgg", MARGIN=1.0):
                                     staircase=True)
     tf.summary.scalar('learning_rate', lr)
 
-    #opt = tf.train.GradientDescentOptimizer(lr)
-    opt = tf.train.GradientDescentOptimizer(2e-2)
+    opt = tf.train.GradientDescentOptimizer(lr)
+    #opt = tf.train.GradientDescentOptimizer(2e-2)
     train_step = opt.minimize(l, global_step=global_step)
 
     _start_time = time.time()
@@ -136,12 +137,12 @@ def TestAndSaveCheckpoint(t_images, t_labels, outputs, sess, items_train, items_
             file.write(str(l[0]) + "\n")
         file.close()
 
-    #b_dataset, b_test = GenHashes(t_images, t_labels, outputs, sess, items_train, items_test)
+    b_dataset, b_test = GenHashes(t_images, t_labels, outputs, sess, items_train, items_test)
 
-    #map_train, map_test = test(items_train, items_test, b_dataset, b_test)
+    map_train, map_test = test(items_train, items_test, b_dataset, b_test)
 
-    #with open(os.path.join(LOG_FOLDER, "log.txt"), "a") as file:
-    #    file.write(str(map_train) + "\t" + str(map_test) + "\n")
+    with open(os.path.join(LOG_FOLDER, "log.txt"), "a") as file:
+        file.write(str(map_train) + "\t" + str(map_test) + "\n")
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
