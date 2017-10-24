@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Downloads all needed data to start training the network"""
+"""Download all needed data to start training the network"""
 
 from utils.download import download
 
