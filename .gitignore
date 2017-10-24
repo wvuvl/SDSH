@@ -4,3 +4,5 @@
 *.mat
 
 __pycache__/
+temp/
+data/
