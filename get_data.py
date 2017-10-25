@@ -19,4 +19,5 @@ from utils.download import download
 data_path = "data/"
 
 download(directory=data_path, url="https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz", extract_targz=True)
-download(directory=data_path, google_drive_fileid="0B3kP5zWXwFm_OUpQbDFqY2dXNGs")
+#download(directory=data_path, google_drive_fileid="0B3kP5zWXwFm_OUpQbDFqY2dXNGs")
+download(directory=data_path, url="http://www.vlfeat.org/matconvnet/models/imagenet-vgg-f.mat")
