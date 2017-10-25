@@ -28,7 +28,7 @@ except ImportError:
     import cookielib as cookiejar
 
 
-def download(directory, url=None, google_drive_fileid=None, extract_targz=False, file_name=None):
+def download(directory=".", url=None, google_drive_fileid=None, extract_targz=False, file_name=None):
     """Downloads a file from provided URL or file id at google drive"""
 
     if url is None and google_drive_fileid is not None:
