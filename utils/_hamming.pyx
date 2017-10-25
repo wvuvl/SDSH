@@ -64,17 +64,18 @@ def calc_hamming_dist(b1, b2):
     cdef np.uint32_t[::1] p1 = __to_int32_hashes(b1)
     cdef np.uint32_t[::1] p2 = __to_int32_hashes(b2)
 
-    cdef np.intp_t l = p1.shape[0]
+    cdef np.intp_t l1 = p1.shape[0]
+    cdef np.intp_t l2 = p2.shape[0]
 
-    cdef np.ndarray[np.int8_t, ndim=2] out = np.zeros([l, l], dtype=np.int8)
+    cdef np.ndarray[np.int8_t, ndim=2] out = np.zeros([l1, l2], dtype=np.int8)
     cdef np.int8_t[:, ::1] out_v = out;
 
     cdef np.int8_t d = 0
     cdef np.int8_t dist = 0
     cdef np.uint32_t val = 0
 
-    for x in range(l):
-        for y in range(l):
+    for x in range(l1):
+        for y in range(l2):
             out_v[x, y] = __hamming_distance_2(p1[x], p2[y])
 
     return out
@@ -84,22 +85,23 @@ def calc_hamming_dist(b1, b2):
 @cython.wraparound(False)
 def sort(a):
     cdef np.int8_t[:, ::1] a_v = a;
-    cdef np.intp_t l = a.shape[0]
+    cdef np.intp_t l1 = a.shape[0]
+    cdef np.intp_t l2 = a.shape[1]
 
     cdef np.int32_t[33] count
     cdef np.int32_t total
     cdef np.int32_t old_count
     cdef np.int8_t key
 
-    cdef np.ndarray[np.int32_t, ndim=2] out = np.zeros([l, l], dtype=np.int32)
+    cdef np.ndarray[np.int32_t, ndim=2] out = np.zeros([l1, l2], dtype=np.int32)
     cdef np.int32_t[:, ::1] out_v = out;
 
-    cdef np.int32_t[::1] tmp = np.zeros([l], dtype=np.int32)
+    cdef np.int32_t[::1] tmp = np.zeros([l2], dtype=np.int32)
 
-    for x in range(l):
+    for x in range(l1):
         for i in range(33):
             count[i] = 0
-        for y in range(l):
+        for y in range(l2):
             count[a_v[x, y]] += 1
         total = 0
         old_count = 0
@@ -108,12 +110,12 @@ def sort(a):
             count[i] = total
             total += old_count
 
-        for y in range(l):
+        for y in range(l2):
             key = a_v[x, y]
             tmp[y] = count[key]
             count[key] += 1
 
-        for y in range(l):
+        for y in range(l2):
             out_v[x, tmp[y]] = y
 
     return out

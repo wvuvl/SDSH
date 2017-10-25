@@ -15,12 +15,11 @@
 
 import numpy as np
 import pickle
-from compute_S import compute_s
-from return_map import return_map
+from mean_average_precision import compute_map
 from utils import cifar10_reader
 
 
-def evaluate(items_train, items_test, b_database, b_test):
+def evaluate(items_train, items_test, hashes_database, hashes_test):
     """Evaluate MAP. Hardcoded numbers for CIFAR10 case. 1000 images per category, i.e. in total 10000 images,
     are randomly sampled as quire images (selection happens at preparation step). The remaining images are used
     as database images.
@@ -28,15 +27,17 @@ def evaluate(items_train, items_test, b_database, b_test):
     r_train = cifar10_reader.Reader('', items_train)
     r_test = cifar10_reader.Reader('', items_test)
 
-    database_l = np.reshape(np.asarray(r_train.get_labels()), [-1, 1])
-    test_l = np.reshape(np.asarray(r_test.get_labels()), [-1, 1])
+    labels_database = np.reshape(np.asarray(r_train.get_labels()), [-1, 1])
+    labels_test = np.reshape(np.asarray(r_test.get_labels()), [-1, 1])
 
-    s = compute_s(database_l[:40000], database_l[40000:])
-    map_train = return_map(b_database[:40000], b_database[40000:], s)
+    map_train = compute_map(
+        hashes_database[:40000],
+        hashes_database[40000:],
+        labels_database[:40000],
+        labels_database[40000:])
     print("Test on train" + str(map_train))
 
-    s = compute_s(database_l, test_l)
-    map_test = return_map(b_database, b_test, s)
+    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test)
     print("Test on test" + str(map_test))
     return map_train, map_test
 

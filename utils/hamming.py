@@ -20,7 +20,7 @@ import numpy as np
 try:
     import pyximport
     pyximport.install(setup_args={'include_dirs': np.get_include()})
-    import _hamming
+    from utils import _hamming
     has_cython = True
 except:
     has_cython = False
@@ -52,7 +52,7 @@ def calc_hamming_rank(b1, b2, force_slow=False):
 # For testing
 if __name__ == '__main__':
     b1 = np.random.rand(10, 24) - 0.5
-    b2 = np.random.rand(10, 24) - 0.5
+    b2 = np.random.rand(20, 24) - 0.5
 
     d1 = calc_hamming_rank(b1, b2)
     d2 = calc_hamming_rank(b1, b2, force_slow=True)
@@ -61,8 +61,8 @@ if __name__ == '__main__':
 
     print("Passed!" if (d1 == d2).all() else "Failed!")
 
-    b1 = np.random.rand(20000, 32) - 0.5
-    b2 = np.random.rand(20000, 32) - 0.5
+    b1 = np.random.rand(10000, 32) - 0.5
+    b2 = np.random.rand(40000, 32) - 0.5
 
     d1 = calc_hamming_rank(b1, b2)
     d2 = calc_hamming_rank(b1, b2, force_slow=True)

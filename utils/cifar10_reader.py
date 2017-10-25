@@ -64,3 +64,9 @@ class Reader:
                     img = np.reshape(img, (3, 32, 32))
                     img = np.transpose(img, (1, 2, 0))
                     self.items.append((label, img))
+
+    def get_labels(self):
+        return [item[0] for item in self.items]
+
+    def get_images(self):
+        return [item[1] for item in self.items]
