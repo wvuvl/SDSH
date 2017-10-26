@@ -16,13 +16,28 @@
 import numpy as np
 
 from utils.hamming import calc_hamming_rank
+from utils import timer
+
+try:
+    import pyximport
+    pyximport.install(setup_args={'include_dirs': np.get_include()})
+    import _mean_average_precision
+    has_cython = True
+except:
+    has_cython = False
 
 
-def compute_map(hashes_train, hashes_test, labels_train, labels_test):
+#@timer.timer
+def compute_map(hashes_train, hashes_test, labels_train, labels_test, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
-    order_h = calc_hamming_rank(hashes_train, hashes_test)
-    s = __compute_s(labels_train, labels_test)
-    return __calc_map(order_h, np.transpose(s))
+    order = calc_hamming_rank(hashes_train, hashes_test, force_slow)
+
+    if has_cython and not force_slow:
+        return _mean_average_precision.calc_map(order, labels_train, labels_test)
+    else:
+        print("Warning. Using slow \"compute_map\"")
+        s = __compute_s(labels_train, labels_test)
+        return __calc_map(order, np.transpose(s))
 
 
 def __compute_s(train_l, test_l):
@@ -33,21 +48,17 @@ def __compute_s(train_l, test_l):
     return np.equal(d, 0)
 
 
-def __calc_map(order_h, neighbor):
+def __calc_map(order, s):
     """compute mean average precision (MAP)"""
-    (Q, N) = neighbor.shape
-    pos = np.asarray(range(1, N + 1))
+    Q, N = s.shape
+    pos = np.asarray(range(1, N + 1), dtype=np.float32)
     map = 0
-    num_succ = 0
-    for i in range(Q):
-        ngb = neighbor[i, order_h[i, :]]
-        n_rel = np.sum(ngb)
-        if n_rel > 0:
-            prec = np.cumsum(ngb) / pos
-            ap = np.mean(prec[ngb])
-            map += ap
-            num_succ += 1
-
-    map /= num_succ
-    num_succ /= Q
-    return map, num_succ
+    for q in range(Q):
+        relevance = s[q, order[q, :]].astype(np.float32)
+        cumulative = np.cumsum(relevance)
+        number_of_relative_docs = cumulative[-1:]
+        precision = cumulative / pos
+        ap = np.dot(precision, relevance) / number_of_relative_docs
+        map += ap
+    map /= Q
+    return float(map)

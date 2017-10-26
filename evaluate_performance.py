@@ -19,7 +19,7 @@ from mean_average_precision import compute_map
 from utils import cifar10_reader
 
 
-def evaluate(items_train, items_test, hashes_database, hashes_test):
+def evaluate(items_train, items_test, hashes_database, hashes_test, force_slow=False):
     """Evaluate MAP. Hardcoded numbers for CIFAR10 case. 1000 images per category, i.e. in total 10000 images,
     are randomly sampled as quire images (selection happens at preparation step). The remaining images are used
     as database images.
@@ -34,11 +34,11 @@ def evaluate(items_train, items_test, hashes_database, hashes_test):
         hashes_database[:40000],
         hashes_database[40000:],
         labels_database[:40000],
-        labels_database[40000:])
-    print("Test on train" + str(map_train))
+        labels_database[40000:], force_slow)
+    print("Test on train " + str(map_train))
 
-    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test)
-    print("Test on test" + str(map_test))
+    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test, force_slow)
+    print("Test on test " + str(map_test))
     return map_train, map_test
 
 
@@ -53,7 +53,10 @@ def evaluate_offline():
     with open('temp/b_test.pkl', 'rb') as pkl:
         b_test = pickle.load(pkl)
 
-    evaluate(items_train, items_test, b_database, b_test)
+    test, train = evaluate(items_train, items_test, b_database, b_test)
+    test2, train2 = evaluate(items_train, items_test, b_database, b_test, True)
+
+    print("Passed!" if (test == test2) and(train == train2) else "Failed!")
 
 if __name__ == '__main__':
     evaluate_offline()
