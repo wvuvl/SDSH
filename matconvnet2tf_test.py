@@ -48,9 +48,9 @@ def main():
     for m in models:
         print("Model: " + m)
         with tf.Graph().as_default(), tf.Session() as session:
-            model = MatConvNet2TF(m)
+            model = MatConvNet2TF(m, True)
             session.run(tf.global_variables_initializer())
-            result = model.net['prob'].eval(feed_dict={model.current: image}).reshape(-1)
+            result = model.net['prob'].eval(feed_dict={model.input: image}).reshape(-1)
             indices = np.flip(result.argsort(), 0)[:10]
             for i in indices:
                 print(str(result[i] * 100.0) + "% " + model.net['classes'][i])
