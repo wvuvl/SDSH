@@ -68,19 +68,29 @@ class MatConvNet2TF:
 
     def _conv_layer(self, input, layer):
         with tf.name_scope(layer.name):
-            input = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
             weights, biases = layer.weights
-            weights = np.array(weights, ndmin=4)
             biases = biases.reshape(-1)
-            w = tf.Variable(weights, name='weights', dtype='float32')
-            b = tf.Variable(biases, name='biases', dtype='float32')
-            self.weight_decay_losses.append(tf.nn.l2_loss(w))
-            conv = tf.nn.conv2d(input,
-                                w,
-                                strides=self._convert_stride(layer.stride),
-                                padding='VALID',
-                                name=layer.name)
-            return tf.nn.bias_add(conv, b, name='add')
+            if (layer.pad != [0, 0, 0, 0]).all():
+                input = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
+            if (layer.size[:2] == [1, 1]).all():
+                weights = weights.reshape([input.get_shape()[-1], -1])
+                w = tf.Variable(weights, name='weights', dtype='float32')
+                b = tf.Variable(biases, name='biases', dtype='float32')
+                self.weight_decay_losses.append(tf.nn.l2_loss(w))
+                if len(input.shape) != 2:
+                    input = tf.reshape(input, [-1, input.get_shape().as_list()[-1]])
+                input = tf.matmul(input, w)
+            else:
+                weights = np.array(weights, ndmin=4)
+                w = tf.Variable(weights, name='weights', dtype='float32')
+                b = tf.Variable(biases, name='biases', dtype='float32')
+                self.weight_decay_losses.append(tf.nn.l2_loss(w))
+                input = tf.nn.conv2d(input,
+                                    w,
+                                    strides=self._convert_stride(layer.stride),
+                                    padding='VALID',
+                                    name=layer.name)
+            return tf.nn.bias_add(input, b, name='add')
 
     def _pool_layer(self, input, layer):
         with tf.name_scope(layer.name):
