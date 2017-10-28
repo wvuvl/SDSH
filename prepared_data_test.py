@@ -26,8 +26,8 @@ def main():
     with open('temp/items_test.pkl', 'rb') as pkl:
         items_test = pickle.load(pkl)
 
-    bp_train = batch_provider.BatchProvider(10, items_train, cycled=True)
-    bp_test = batch_provider.BatchProvider(10, items_test, cycled=True)
+    bp_train = batch_provider.BatchProvider(40, items_train, cycled=True)
+    bp_test = batch_provider.BatchProvider(40, items_test, cycled=True)
 
     it = bp_train.get_batches()
     b = next(it)
