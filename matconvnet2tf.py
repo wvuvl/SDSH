@@ -22,7 +22,7 @@ import tensorflow as tf
 
 class MatConvNet2TF:
     """Reads matconvnet file creates tensorflow graph."""
-    def __init__(self, data_path, do_debug_print=False):
+    def __init__(self, data_path, input=None, do_debug_print=False):
         data = scipy.io.loadmat(data_path, struct_as_record=False, squeeze_me=True)
         layers = data['layers']
         self.mean = np.array(data['meta'].normalization.averageImage, ndmin=4)
@@ -30,9 +30,13 @@ class MatConvNet2TF:
         self.weight_decay_losses = []
         self.net['classes'] = data['meta'].classes.description
         self.do_debug_print = do_debug_print
-        input_shape = tuple(data['meta'].inputs.size[:3])
-        input_shape = (None,) + input_shape
-        self.input = tf.placeholder('float32', input_shape)
+
+        if input is None:
+            input_shape = tuple(data['meta'].inputs.size[:3])
+            input_shape = (None,) + input_shape
+            self.input = tf.placeholder('float32', input_shape)
+        else:
+            self.input = input
 
         self.layer_types = {
             'conv': self._conv_layer,

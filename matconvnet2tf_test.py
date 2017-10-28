@@ -48,7 +48,7 @@ def main():
     for m in models:
         print("Model: " + m)
         with tf.Graph().as_default(), tf.Session() as session:
-            model = MatConvNet2TF(m, True)
+            model = MatConvNet2TF(m, do_debug_print=True)
             session.run(tf.global_variables_initializer())
             result = model.net['prob'].eval(feed_dict={model.input: image}).reshape(-1)
             indices = np.flip(result.argsort(), 0)[:10]
