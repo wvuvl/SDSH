@@ -12,6 +12,8 @@ from facehash_net import loss
 from facehash_net import loss2
 from facehash_net import loss_accv
 from facehash_net import loss_accv_mod
+from facehash_net import loss_spring
+
 from tensorflow.contrib.tensorboard.plugins import projector
 
 from facehash_genHashes import GenHashes
@@ -23,7 +25,7 @@ NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
 NUM_EPOCHS_PER_DECAY = 67.0      # Epochs after which learning rate decays.
 LEARNING_RATE_DECAY_FACTOR = 2.0 / 3.0  # Learning rate decay factor.
 INITIAL_LEARNING_RATE = 0.02      # Initial learning rate.
-TOTAL_EPOCHS_COUNT = 200
+TOTAL_EPOCHS_COUNT = 100
 HASH_SIZE = 24
 BATCH_SIZE = 150
 WEIGHT_DECAY_FACTOR = 5.0e-5
@@ -56,7 +58,7 @@ def main(LOG_FOLDER = "F:/tmp/vgg_accv_mod", MARGIN=1.0):
     assignment = tf.assign(embedding_var, embedding_norm)
 
     weigh_decay = model.weight_decay * WEIGHT_DECAY_FACTOR
-    l = loss_accv_mod(outputs, t_labels, HASH_SIZE, BATCH_SIZE, MARGIN) + weigh_decay
+    l = loss_spring(outputs, t_labels, HASH_SIZE, BATCH_SIZE, MARGIN)# + weigh_decay
 
     tf.summary.scalar('weigh_decay', weigh_decay)
     tf.summary.scalar('total_loss_plus_weigh_decay', l)
@@ -78,8 +80,8 @@ def main(LOG_FOLDER = "F:/tmp/vgg_accv_mod", MARGIN=1.0):
                                     staircase=True)
     tf.summary.scalar('learning_rate', lr)
 
-    opt = tf.train.GradientDescentOptimizer(lr)
-    #opt = tf.train.GradientDescentOptimizer(2e-2)
+    #opt = tf.train.GradientDescentOptimizer(lr)
+    opt = tf.train.GradientDescentOptimizer(0.2e-1)
     train_step = opt.minimize(l, global_step=global_step)
 
     _start_time = time.time()

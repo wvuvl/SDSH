@@ -154,6 +154,33 @@ def loss(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128, MARGIN=1.0):
         tf.summary.scalar('contrustive_loss', l)
         return l
 
+def loss_spring(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128, MARGIN=1.0):
+    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    with tf.name_scope('loss') as scope:
+        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
+        distance = 2.0 - 2.0 * bibj
+        negative_distance = tf.reshape(distance, [BATCH_SIZE, 1, BATCH_SIZE])
+
+        sim = tf.equal(ids, tf.reshape(ids, [BATCH_SIZE]))
+
+        s = tf.cast(sim, tf.int32) * ids
+        striple = tf.cast(tf.logical_and(tf.not_equal(s, tf.reshape(ids, [BATCH_SIZE, 1, 1])), sim), tf.float32)
+
+        d = tf.sqrt(-distance + negative_distance + 4.0 + 1e-6)
+        twol = 8**0.5
+        K = 6
+        alpha = MARGIN
+        Kp = K / (1.0-alpha**2/(twol+alpha)**2)
+        C = K-Kp
+        print("Kp = " + str(Kp))
+        print("C = " + str(C))
+
+        E = striple * (Kp*tf.square(twol+alpha-d)/(twol+alpha)**2 + C)
+
+        l = tf.reduce_sum(E) / 303750.0
+        tf.summary.scalar('spring_loss', l)
+        return l
+
 def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
 
