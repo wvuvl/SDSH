@@ -17,7 +17,8 @@
 from random import shuffle
 # import matplotlib.pyplot as plt
 from scipy import misc
-
+import queue
+from threading import Thread, Lock
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
@@ -29,39 +30,49 @@ class BatchProvider:
         self.cycled = cycled
         self.done = False
         self.image_size = (width, height)
+        self.mutex = Lock()
+
+        self.batch = None
 
     def get_batches(self):
+        t = Thread(target=self._get_batch)
+        t.start()
+        while True:
+            t.join()
+            b = self.batch
+            t = Thread(target=self._get_batch)
+            t.start()
+            yield b
+
+    def _get_batch(self):
         """Return batch generator. Batch is  a dict {"images": <images>, "labels": <labels>}"""
 
-        while True:
-            b_images = []
-            b_labels = []
+        b_images = []
+        b_labels = []
+        for i in range(0, self.batch_size):
+            if self.current_image == len(self.items):
+                if self.cycled:
+                    self.current_image = 0
+                    shuffle(self.items)
+                else:
+                    self.batch = None
+                    return None
+            ci = self.current_image
+            self.current_image += 1
+            image = misc.imresize(self.items[ci][1], self.image_size, interp='bilinear')
+            # Data augmentation. Should be removed from here
+            # if random.random() > 0.5:
+            #    im = np.fliplr(image)
+            # image = np.roll(im, random.randint(-21, 21), 0)
+            # image = np.roll(im, random.randint(-21, 21), 1)
+            # plt.imshow(image)
+            # plt.show()
+            b_images.append(image)
+            b_labels.append([self.items[ci][0]])
+        feed_dict = {"images": b_images, "labels": b_labels}
 
-            for i in range(0, self.batch_size):
-                if self.current_image == len(self.items):
-                    if self.cycled:
-                        self.current_image = 0
-                        shuffle(self.items)
-                    else:
-                        yield None
-                image = misc.imresize(self.items[self.current_image][1], self.image_size, interp='bilinear')
-
-                # Data augmentation. Should be removed from here
-                #if random.random() > 0.5:
-                #    im = np.fliplr(image)
-                #image = np.roll(im, random.randint(-21, 21), 0)
-                #image = np.roll(im, random.randint(-21, 21), 1)
-                #plt.imshow(image)
-                #plt.show()
-
-                b_images.append(image)
-                b_labels.append([self.items[self.current_image][0]])
-
-                self.current_image += 1
-
-            feed_dict = {"images": b_images, "labels": b_labels}
-
-            yield feed_dict
+        self.batch = feed_dict
+        return feed_dict
 
 
 # For testing

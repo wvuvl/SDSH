@@ -163,7 +163,7 @@ class Train:
 
                 logger.debug(format_str % (i, examples_per_sec, sec_per_batch))
 
-                if (i % 1000 == 0) and i != 0:
+                if (i % 2000 == 0) and i != 0:
                     self.TestAndSaveCheckpoint(model, session, items_train, items_test, cfg.hash_size,
                                                directory, embedding_conf, saver, global_step, feed_dict)
 

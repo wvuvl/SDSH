@@ -12,11 +12,10 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
     bp_train = batch_provider.BatchProvider(BATCH_SIZE, items_train, cycled=False)
     bp_test = batch_provider.BatchProvider(BATCH_SIZE, items_test, cycled=False)
 
-    b_dataset = np.zeros([len(items_train), hash_size])
+    b = np.empty([0, hash_size])
 
     batches_train = bp_train.get_batches()
 
-    k = 0
     while True:
         feed_dict = next(batches_train)
         if feed_dict is None:
@@ -24,13 +23,14 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
 
         result = sess.run(outputs, {t_images: feed_dict["images"], t_labels: feed_dict["labels"]})
 
-        b_dataset[k:k+BATCH_SIZE] = result
+        b = np.concatenate((b, result))
 
-    b_test = np.zeros([len(items_test), hash_size])
+    b_dataset = np.copy(b)
+
+    b = np.empty([0, hash_size])
 
     batches_test = bp_test.get_batches()
 
-    k = 0
     while True:
         feed_dict = next(batches_test)
         if feed_dict is None:
@@ -38,7 +38,9 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
 
         result = sess.run(outputs, {t_images: feed_dict["images"], t_labels: feed_dict["labels"]})
 
-        b_test[k:k+BATCH_SIZE] = result
+        b = np.concatenate((b, result))
+
+    b_test = np.copy(b)
 
     return b_dataset, b_test
 
