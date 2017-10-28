@@ -5,11 +5,11 @@ import pickle
 from compute_S import compute_s
 from return_map import return_map
 from datetime import datetime
-from facehash_net import vgg_f
+from matconvnet2tf import vgg_f
 import time
 import tensorflow as tf
 import math
-from facehash_net import loss2
+from loss_functions import loss2
 
 HASH_SIZE = 24
 
