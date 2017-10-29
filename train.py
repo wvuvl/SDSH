@@ -184,13 +184,13 @@ class Train:
             file.close()
 
         self.logger.info("Start generating hashes")
-        b_dataset, b_test = gen_hashes(model.t_images, model.t_labels, model.output,
+        l_dataset, b_dataset, l_test, b_test = gen_hashes(model.t_images, model.t_labels, model.output,
                                        session, items_train, items_test, hash_size)
 
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(items_train, items_test, b_dataset, b_test)
+        map_train, map_test = evaluate(l_dataset, b_dataset, l_test, b_test)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")

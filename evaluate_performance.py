@@ -18,17 +18,13 @@ import pickle
 from mean_average_precision import compute_map
 from utils import cifar10_reader
 
-
-def evaluate(items_train, items_test, hashes_database, hashes_test, force_slow=False):
+def evaluate(l_dataset, hashes_database, l_test, hashes_test, force_slow=False):
     """Evaluate MAP. Hardcoded numbers for CIFAR10 case. 1000 images per category, i.e. in total 10000 images,
     are randomly sampled as quire images (selection happens at preparation step). The remaining images are used
     as database images.
     """
-    r_train = cifar10_reader.Reader('', items_train)
-    r_test = cifar10_reader.Reader('', items_test)
-
-    labels_database = np.reshape(np.asarray(r_train.get_labels()), [-1, 1])
-    labels_test = np.reshape(np.asarray(r_test.get_labels()), [-1, 1])
+    labels_database = np.reshape(np.asarray(l_dataset), [-1, 1])
+    labels_test = np.reshape(np.asarray(l_test), [-1, 1])
 
     map_train = compute_map(
         hashes_database[:40000],
