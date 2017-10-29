@@ -57,7 +57,7 @@ def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5):
     \"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\"
     Removed binarization regularizer
     """
-    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    embedding_norm = tf.nn.l2_normalize(embedding, 1) * 4.898979
     with tf.name_scope('loss') as scope:
         bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
         distance = bibj / 2.0
@@ -66,10 +66,10 @@ def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5):
 
         triplets = __get_triplets(batch_size, ids)
 
-        arg = hash_size * (dqmp - margin)
+        arg = (dqmp - margin)
 
         basic_loss = tf.maximum(-arg, 0) + tf.log(1.0 + tf.exp(-tf.abs(arg)))
-        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) / hash_size
+        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets)
         return loss
 
 
