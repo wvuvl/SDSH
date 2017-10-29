@@ -21,7 +21,7 @@ from matconvnet2tf import MatConvNet2TF
 def net(batch_size, hash_size, margin=0, weight_decay_factor=0, loss_func=None):
     t_images = tf.placeholder(tf.float32, [None, 224, 224, 3])
     t_labels = tf.placeholder(tf.int32, [None, 1])
-    model = MatConvNet2TF("data/imagenet-vgg-f.mat", input=t_images, do_debug_print=True)
+    model = MatConvNet2TF("data/imagenet-vgg-f.mat", input=t_images, ignore=['fc8', 'prob'], do_debug_print=True)
 
     model.t_images = t_images
     model.t_labels = t_labels

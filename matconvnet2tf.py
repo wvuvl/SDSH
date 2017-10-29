@@ -22,13 +22,16 @@ import tensorflow as tf
 
 class MatConvNet2TF:
     """Reads matconvnet file creates tensorflow graph."""
-    def __init__(self, data_path, input=None, do_debug_print=False):
+    def __init__(self, data_path, input=None, ignore=[], do_debug_print=False):
         data = scipy.io.loadmat(data_path, struct_as_record=False, squeeze_me=True)
         layers = data['layers']
-        self.mean = np.array(data['meta'].normalization.averageImage, ndmin=4)
         self.net = {}
+        try:
+            self.mean = np.array(data['meta'].normalization.averageImage, ndmin=4)
+            self.net['classes'] = data['meta'].classes.description
+        except KeyError:
+            self.mean = np.array(data['normalization'].averageImage, ndmin=4)
         self.weight_decay_losses = []
-        self.net['classes'] = data['meta'].classes.description
         self.do_debug_print = do_debug_print
 
         if input is None:
@@ -43,13 +46,15 @@ class MatConvNet2TF:
             'relu': self._relu_layer,
             'pool': self._pool_layer,
             'lrn': self._lrn_layer,
+            'normalize': self._lrn_layer,
             'softmax': self._softmax_layer,
         }
 
         current = self.input - self.mean
         for i, layer in enumerate(layers):
-            current = self.layer_types[layer.type](current, layer)
-            self.net[layer.name] = current
+            if layer.name not in ignore:
+                current = self.layer_types[layer.type](current, layer)
+                self.net[layer.name] = current
         self.output = current
         self.weight_decay = tf.add_n(self.weight_decay_losses)
 
@@ -79,7 +84,7 @@ class MatConvNet2TF:
         alpha = layer.param[2]
         beta = layer.param[3]
         if self.do_debug_print:
-            print("{0:6} {1:6}. dim: {2}. depth: {3}, bias: {4}, alpha: {5}, beta: {5}".format(
+            print("{0:6} {1:6}. dim: {2}. depth: {3}, bias: {4}, alpha: {5}, beta: {6}".format(
                 layer.name,
                 'lrn',
                 input.get_shape(),
@@ -99,9 +104,12 @@ class MatConvNet2TF:
             weights, biases = layer.weights
             biases = biases.reshape(-1)
             output = input
-            if (layer.pad != [0, 0, 0, 0]).all():
+            if (layer.pad != [0, 0, 0, 0]).any():
                 output = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
-            if ((layer.size[:2] == [1, 1]).all() or layer.size[:3] == input.get_shape().as_list()[1:]).all():
+            #if ((layer.size[:2] == [1, 1]).all() or layer.size[:3] == input.get_shape().as_list()[1:]).all():
+            if (np.asarray(weights.shape)[:2] == [1, 1]).all() or \
+                    len(weights.shape) == 2 or\
+                    (np.asarray(weights.shape)[:3] == input.get_shape().as_list()[1:]).all():
                 if len(output.shape) != 2:
                     shape = output.get_shape().as_list()[1:]
                     output = tf.reshape(output, [-1, shape[0] * shape[1] * shape[2]])
@@ -139,17 +147,19 @@ class MatConvNet2TF:
 
     def _pool_layer(self, input, layer):
         with tf.name_scope(layer.name):
-            input = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
+            if (layer.pad != [0, 0, 0, 0]).any():
+                input = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
             output = tf.nn.max_pool(input,
                                   ksize=self._convert_stride(layer.pool),
                                   strides=self._convert_stride(layer.stride),
                                   padding='VALID')
         if self.do_debug_print:
-            print("{0:6} {1:6}. dim-in: {2} dim-out: {3} ksize: {4}, strides: {5}".format(
+            print("{0:6} {1:6}. dim-in: {2} dim-out: {3} pad: {4} ksize: {5}, strides: {6}".format(
                 layer.name,
                 'pool',
                 input.get_shape(),
                 output.get_shape(),
+                layer.pad,
                 layer.pool,
                 layer.stride))
         return output
