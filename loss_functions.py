@@ -129,9 +129,10 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
         """
 
         epsilon = 1e-6
-        e = (2.0 - tf.sqrt(dqmp) + epsilon) / 2.0
+        d = tf.sqrt(4.0 - dqmp + epsilon)
+        twol = 8**0.5
 
-        E = triplets * tf.square(e)
+        E = triplets * tf.square(twol - d)
 
         loss = tf.reduce_sum(E) / tf.reduce_sum(triplets)
         return loss

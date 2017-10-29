@@ -24,7 +24,7 @@ from utils import cifar10_reader
 def main():
     """Main function, run it if you import this file"""
     # Read all data (train and test), we are going to split later
-    r = cifar10_reader.Reader('cifar-10-batches-bin', train=True, test=True)
+    r = cifar10_reader.Reader('data/cifar-10-batches-bin', train=True, test=True)
 
     categorized = {key: [] for key in range(10)}
 
