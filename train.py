@@ -67,7 +67,7 @@ class Train:
             return
 
         logger = logging.getLogger(name)
-        logger.handlers.clear()
+        logger.handlers = []
         logger.setLevel(logging.DEBUG)
         logger.propagate = False
         self.logger = logger
