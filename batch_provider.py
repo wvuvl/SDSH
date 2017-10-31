@@ -97,7 +97,7 @@ class BatchProvider:
 
         b_images = []
         b_labels = []
-        
+
         for i in range(self.batch_size):
             item = items[cb * self.batch_size + i]
 

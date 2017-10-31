@@ -52,7 +52,7 @@ class Train:
         for key in config:
             setattr(cfg, key, config[key])
 
-        name = "{0}_{1}_{2}_{3}".format(cfg.loss, cfg.hash_size, cfg.margin, cfg.weight_decay_factor)
+        name = "{0}_h{1}_m{2}_l{3}_d{4}".format(cfg.loss, cfg.hash_size, cfg.margin, cfg.learning_rate, cfg.weight_decay_factor)
 
         directory = os.path.join(path, name)
         self.directory = directory
@@ -114,8 +114,12 @@ class Train:
                                             staircase=True)
             tf.summary.scalar('learning_rate', lr)
 
+            weights_fc = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                                 "fc*")
+
             opt = tf.train.GradientDescentOptimizer(lr)
 
+            #pre_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
             train_step = opt.minimize(model.loss, global_step=global_step)
             _start_time = time.time()
             merged = tf.summary.merge_all()
@@ -142,8 +146,15 @@ class Train:
 
             for i in range(start_step, int(cfg.total_epoch_count * num_batches_per_epoch)):
                 feed_dict = next(batches)
+
+                #if i < 2000:
+                #    step = pre_train_step
+                #else:
+                #    step = train_step
+                step = train_step
+
                 summary, _, _ = session.run(
-                    [merged, model.assignment, train_step],
+                    [merged, model.assignment, step],
                     {
                         model.t_images: feed_dict["images"],
                         model.t_labels: feed_dict["labels"]
