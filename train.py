@@ -7,6 +7,7 @@ import time
 from pprint import pformat
 
 import tensorflow as tf
+import numpy as np
 from tensorflow.contrib.tensorboard.plugins import projector
 
 import batch_provider
@@ -25,6 +26,10 @@ class Train:
         self.console_handler.setFormatter(self.formatter)
         self.logger = None
         self.directory = None
+        self.l_dataset = None
+        self.b_dataset = None
+        self.l_test = None
+        self.b_test = None
 
         log_main = logging.getLogger()
         log_main.setLevel(logging.INFO)
@@ -181,8 +186,11 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-            with open(os.path.join(directory, "Done.txt"), "a") as file:
-                file.write("\n")
+
+        self.Rotation(cfg.hash_size, directory)
+
+        with open(os.path.join(directory, "Done.txt"), "a") as file:
+            file.write("\n")
 
     def TestAndSaveCheckpoint(self, model, session, items_train, items_test, hash_size,
                               directory, embedding_conf, saver, global_step, feed_dict=None):
@@ -195,14 +203,182 @@ class Train:
             file.close()
 
         self.logger.info("Start generating hashes")
-        l_dataset, b_dataset, l_test, b_test = gen_hashes(model.t_images, model.t_labels, model.output,
-                                       session, items_train, items_test, hash_size)
+        self.l_dataset, self.b_dataset, self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
+                                       model.output, session, items_train, items_test, hash_size)
 
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(l_dataset, b_dataset, l_test, b_test)
+        map_train, map_test = evaluate(self.l_dataset, self.b_dataset, self.l_test, self.b_test)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
+        self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
+
+    def Rotation(self, hash_size, directory):
+        NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
+        NUM_EPOCHS_PER_DECAY = 50.0
+        LEARNING_RATE_DECAY_FACTOR = 0.5
+
+        CLAMP = 0.03
+        INITIAL_LEARNING_RATE = 0.07
+        TOTAL_EPOCHS_COUNT = 100
+
+        self.logger.info("Rotation")
+
+        with tf.Graph().as_default(), tf.Session() as session:
+
+            input_hash = tf.placeholder(tf.float32, [None, hash_size])
+            input_label = tf.placeholder(tf.int32, [None, 1])
+
+            r = tf.Variable(tf.eye(hash_size), dtype=tf.float32)
+
+            r_tr = tf.matrix_band_part(r, 0, -1)
+            r_tr *= tf.ones((hash_size, hash_size)) - tf.eye(hash_size)
+            r_tr += -tf.transpose(r_tr)
+
+            r_tr2 = tf.matmul(r_tr, r_tr)
+            r_tr3 = tf.matmul(r_tr2, r_tr)
+            r_tr4 = tf.matmul(r_tr3, r_tr)
+            r_tr5 = tf.matmul(r_tr4, r_tr)
+            r_tr6 = tf.matmul(r_tr5, r_tr)
+            r_tr7 = tf.matmul(r_tr6, r_tr)
+            r_tr8 = tf.matmul(r_tr7, r_tr)
+            r_tr9 = tf.matmul(r_tr8, r_tr)
+            r_tr10 = tf.matmul(r_tr9, r_tr)
+            r_tr11 = tf.matmul(r_tr10, r_tr)
+            r_tr12 = tf.matmul(r_tr11, r_tr)
+            r_tr13 = tf.matmul(r_tr12, r_tr)
+            rot = \
+                tf.eye(hash_size) \
+                + r_tr \
+                + 1.0 / 2.0 * r_tr2\
+                + 1.0 / 6.0 * r_tr3\
+                + 1.0 / 24.0 * r_tr4\
+                + 1.0 / 120.0 * r_tr5\
+                + 1.0 / 720.0 * r_tr6\
+                + 1.0 / 5040.0 * r_tr7\
+                + 1.0 / 40320.0 * r_tr8\
+                + 1.0 / 362880.0 * r_tr9\
+                + 1.0 / 3628800.0 * r_tr10\
+                + 1.0 / 39916800.0 * r_tr11\
+                + 1.0 / 479001600.0 * r_tr12\
+                + 1.0 / 6227020800.0 * r_tr13\
+
+
+            b_r = tf.matmul(input_hash, rot)
+            #b_r = tf.nn.l2_normalize(b_r, 1)
+
+            batch_size = 1000
+            positive_pairs = tf.cast(tf.equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
+            negative_triples = tf.cast(tf.not_equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
+
+            mul = tf.multiply(tf.reshape(b_r, [1, batch_size, hash_size]), tf.reshape(b_r, [batch_size, 1, hash_size]))
+
+            mul = tf.maximum(mul, -CLAMP)
+            mul = tf.minimum(mul, CLAMP)
+
+            negative = tf.reshape(negative_triples, [batch_size, batch_size, 1]) * mul / CLAMP
+            positive = tf.reshape(positive_pairs, [batch_size, batch_size, 1]) * mul / CLAMP
+
+            reg = tf.reduce_mean(tf.square(tf.matmul(r, r, transpose_b=True) - tf.eye(hash_size)))
+
+            loss = tf.reduce_mean(negative) - tf.reduce_mean(positive)# + reg
+
+            tf.summary.scalar('loss', loss)
+            tf.summary.scalar('reg', reg)
+
+
+            #size = 50000
+            #b = tf.constant(self.b_dataset, dtype=tf.float32)
+            #l = tf.constant(self.l_dataset, dtype=tf.float32)
+
+            #b_rn = tf.nn.l2_normalize(b_r, 1)
+
+            epsilon = 1e-9
+
+            #loss_list = []
+            #for i in range(10):
+            ##    s = tf.cast(tf.equal(l, i), tf.float32)
+            #   h = tf.reduce_mean(b_r * s, 0)
+            #    #loss_ = -tf.reduce_mean(tf.exp(0.2 * tf.log(tf.abs(b_r) + epsilon)))
+            #    loss_ = tf.reduce_mean(tf.square(1.0 - tf.abs(h)))
+            #    loss_list.append(loss_)
+
+            #loss = tf.add_n(loss_list)
+
+            #b_rn_mean = tf.reduce_mean(b_rn, 0)
+            #loss2 = tf.reduce_mean(tf.square(1.0 - tf.abs(b_r)))
+            #loss3 = -tf.reduce_mean(tf.exp(0.2 * tf.reduce_sum(tf.log(tf.abs(b_rn) + epsilon), 1)))
+
+            #loss_total = loss# + reg
+
+            #tf.summary.scalar('loss', loss)
+            #tf.summary.scalar('loss2', loss2)
+            #tf.summary.scalar('loss3', loss3)
+            #tf.summary.scalar('loss_total', loss_total)
+            #tf.summary.scalar('reg', reg)
+
+            num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / batch_size
+            decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+
+            print('decay_steps: ' + str(decay_steps))
+
+            global_step = tf.contrib.framework.get_or_create_global_step()
+
+            # Decay the learning rate exponentially based on the number of steps.
+            lr = tf.train.exponential_decay(INITIAL_LEARNING_RATE,
+                                            global_step,
+                                            decay_steps,
+                                            LEARNING_RATE_DECAY_FACTOR,
+                                            staircase=True)
+            tf.summary.scalar('learning_rate', lr)
+
+            opt = tf.train.GradientDescentOptimizer(lr)
+            train_step = opt.minimize(loss, global_step=global_step)
+
+            _start_time = time.time()
+
+            merged = tf.summary.merge_all()
+
+            writer = tf.summary.FileWriter("F:\\tmp\\train2", flush_secs=10, graph=session.graph)
+
+            session.run(tf.global_variables_initializer())
+
+            k = 0
+            for i in range(int(TOTAL_EPOCHS_COUNT * num_batches_per_epoch)):
+                summary, _ = session.run([merged, train_step],
+                                         {
+                                             input_hash:  self.b_dataset[k * batch_size:k * batch_size + batch_size],
+                                             input_label:  self.l_dataset[k * batch_size:k * batch_size + batch_size],
+                                         })
+                writer.add_summary(summary, i)
+
+                k +=1
+                if (k+1) * batch_size >= len(self.b_dataset):
+                    k = 0
+
+                current_time = time.time()
+                duration = current_time - _start_time + 0.00001
+                _start_time = current_time
+
+                examples_per_sec = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / duration
+                sec_per_batch = float(duration)
+
+                format_str = ('%s: step %d, (%.1f examples/sec; %.3f '
+                              'sec/batch)')
+                print(format_str % (time.time(), i, examples_per_sec, sec_per_batch))
+
+            b_full = tf.constant(self.b_dataset, dtype=tf.float32)
+            b_test_full = tf.constant(self.b_test, dtype=tf.float32)
+            b_dataset_r = session.run(tf.matmul(b_full, rot), {})
+            b_test_r = session.run(tf.matmul(b_test_full, rot), {})
+
+        self.logger.info("Finished learning rotation")
+        self.logger.info("Starting evaluation")
+
+        map_train, map_test = evaluate(self.l_dataset, b_dataset_r, self.l_test, b_test_r)
+
+        with open(os.path.join(directory, "results.txt"), "a") as file:
+            file.write("Rotation: " + str(map_train) + "\t" + str(map_test) + "\n")
         self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
