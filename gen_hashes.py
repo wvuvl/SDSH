@@ -13,7 +13,7 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
     bp_test = batch_provider.BatchProvider(BATCH_SIZE, items_test, cycled=False)
 
     b_dataset = np.zeros([len(items_train), hash_size])
-    l_dataset = np.zeros([len(items_train), 1])
+    l_dataset = np.zeros([len(items_train), 1], dtype=np.int32)
 
     batches_train = bp_train.get_batches()
 
@@ -35,7 +35,7 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
     assert(len(l_dataset) == k)
 
     b_test = np.empty([len(items_test), hash_size])
-    l_test = np.empty([len(items_test), 1])
+    l_test = np.empty([len(items_test), 1], dtype=np.int32)
 
     batches_test = bp_test.get_batches()
 
