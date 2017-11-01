@@ -26,6 +26,9 @@ def evaluate(l_dataset, hashes_database, l_test, hashes_test, force_slow=False):
     labels_database = np.reshape(np.asarray(l_dataset), [-1, 1])
     labels_test = np.reshape(np.asarray(l_test), [-1, 1])
 
+    hashes_database = hashes_database.astype(np.float32)
+    hashes_test = hashes_test.astype(np.float32)
+
     map_train = compute_map(
         hashes_database[:40000],
         hashes_database[40000:],
