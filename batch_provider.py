@@ -51,8 +51,8 @@ class BatchProvider:
 
         self.jpeg = type(items[0][1]) is str
 
-        self.env = lmdb.open('nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
-
+        if self.jpeg:
+            self.env = lmdb.open('nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
 
     def get_batches(self):
         workers = []
