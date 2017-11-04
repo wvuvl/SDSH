@@ -15,14 +15,21 @@
 """Batch provider. Returns iterator to batches"""
 
 from random import shuffle
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from scipy import misc
+import lmdb
 try:
     import queue
 except ImportError:
     import Queue as queue
 from threading import Thread, Lock, Event
 import logging
+from PIL import Image
+try:
+    from BytesIO import BytesIO
+except ImportError:
+    from io import BytesIO
+
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
@@ -41,6 +48,11 @@ class BatchProvider:
         self.q = queue.Queue(16)
         self.batches_n = len(self.items)//self.batch_size
         logging.debug("Batches per epoch: {0}", self.batches_n)
+
+        self.jpeg = type(items[0][1]) is str
+
+        self.env = lmdb.open('nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
+
 
     def get_batches(self):
         workers = []
@@ -98,10 +110,19 @@ class BatchProvider:
         b_images = []
         b_labels = []
 
+        buffer = BytesIO()
         for i in range(self.batch_size):
             item = items[cb * self.batch_size + i]
 
-            image = misc.imresize(item[1], self.image_size, interp='bilinear')
+            if not self.jpeg:
+                image = misc.imresize(item[1], self.image_size, interp='bilinear')
+            else:
+                with self.env.begin() as txn:
+                    buf = txn.get(item[1].encode('ascii'))
+                    buffer.seek(0)
+                    buffer.write(buf)
+                    image = misc.imread(buffer)
+                    #misc.imsave(str(i) + "_" + str(item[0])+ "test.jpg", image)
             # Data augmentation. Should be removed from here
             # if random.random() > 0.5:
             #    im = np.fliplr(image)

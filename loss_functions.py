@@ -18,15 +18,21 @@ import numpy as np
 import tensorflow as tf
 
 
-def __get_triplets(batch_size, ids):
+def __get_triplets(batch_size, ids, boolean_mask):
     """Return boolean 3D Tensor of valid pairs mask"""
-    positive_pairs = tf.equal(ids, tf.reshape(ids, [batch_size]))
-    negative_triples = tf.not_equal(ids, tf.reshape(ids, [batch_size, 1, 1]))
+    if boolean_mask is None:
+        positive_pairs = tf.equal(ids, tf.reshape(ids, [batch_size]))
+    else:
+        positive_pairs = boolean_mask
+    eye = np.logical_not(np.eye(batch_size, dtype=np.bool))
+    eye = tf.constant(eye, dtype=tf.bool)
+    positive_pairs = tf.logical_and(positive_pairs, eye)
+    negative_triples = tf.logical_not(tf.reshape(positive_pairs, [batch_size, 1, batch_size]))
     triplets = tf.cast(tf.logical_and(negative_triples, positive_pairs), tf.float32)
     return triplets
 
 
-def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12):
+def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_mask = None):
     """Loss from the paper\"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\""""
     with tf.name_scope('loss') as scope:
         bibj = tf.matmul(embedding, embedding, transpose_b=True)
@@ -47,12 +53,12 @@ def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12):
         # eta = 100, but used with additional multiplier 2
         # 2 * eta * N / T / N = 2 * 100 / 22500 = 0.00888
 
-        triplets = __get_triplets(batch_size, ids)
+        triplets = __get_triplets(batch_size, ids, boolean_mask)
         loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) + 0.00888 * binarization_regularizer
         return loss
 
 
-def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5):
+def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5, boolean_mask = None):
     """Modified loss from the paper
     \"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\"
     Removed binarization regularizer
@@ -64,7 +70,7 @@ def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5):
         negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
         dqmp = distance - negative_distance
 
-        triplets = __get_triplets(batch_size, ids)
+        triplets = __get_triplets(batch_size, ids, boolean_mask)
 
         arg = (dqmp - margin)
         arg *= hash_size
@@ -74,7 +80,7 @@ def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5):
         return loss
 
 
-def loss_triplet(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
+def loss_triplet(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
     """Regular triplet loss
     Removed binarization regularizer
     """
@@ -90,14 +96,14 @@ def loss_triplet(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
         negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
         dqmp = distance - negative_distance
 
-        triplets = __get_triplets(batch_size, ids)
+        triplets = __get_triplets(batch_size, ids, boolean_mask)
 
         basic_loss = triplets * tf.maximum(dqmp + margin, 0.0)
         loss = tf.reduce_mean(basic_loss)
         return loss
 
 
-def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
+def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
     """"Energy based spring loss"""
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
@@ -106,11 +112,11 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
         # squared euclidian distance
         # ||bi - bj|| = (bi - bj)^2 = bi^2 - 2 * bj^2 = 2 - 2 * bi * bj
         # bi^2 == 1 and because bi are normalized
-        distance = 2.0 - 2.0 * bibj
+        distance = -2.0 * bibj
 
         negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
         dqmp = distance - negative_distance
-        triplets = __get_triplets(batch_size, ids)
+        triplets = __get_triplets(batch_size, ids, boolean_mask)
 
         # strain
         # max_distance - distance. max_distance == 2
@@ -129,7 +135,7 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0):
 
         """
 
-        epsilon = 1e-6
+        epsilon = 1e-8
         d = tf.sqrt(4.0 - dqmp + epsilon)
         twol = 8**0.5
 

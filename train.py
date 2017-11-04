@@ -51,13 +51,18 @@ class Train:
                 self.learning_rate_decay_factor = 0
                 self.learning_rate = 0
                 self.total_epoch_count = 0
+                self.dataset = None
 
         cfg = Cfg()
+        self.cfg = cfg
 
         for key in config:
             setattr(cfg, key, config[key])
 
         name = "{0}_h{1}_m{2}_l{3}_d{4}".format(cfg.loss, cfg.hash_size, cfg.margin, cfg.learning_rate, cfg.weight_decay_factor)
+
+        if cfg.dataset is not None:
+            name = cfg.dataset + "_" + name
 
         directory = os.path.join(path, name)
         self.directory = directory
@@ -88,10 +93,19 @@ class Train:
             logger.info("\n{0}\n{1}\n{0}\n".format("-" * 80, name))
             logger.info("\nSettings:\n{0}".format(pformat(vars(cfg))))
 
-            with open('temp/items_train.pkl', 'rb') as pkl:
-                items_train = pickle.load(pkl)
-            with open('temp/items_test.pkl', 'rb') as pkl:
-                items_test = pickle.load(pkl)
+            items_test = []
+            items_train = []
+            if cfg.dataset is None:
+                with open('temp/items_train.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/items_test.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+            elif "nus":
+                with open('temp/items_train_nuswide.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/items_test_nuswide.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+                    items_train = items_train[:156700]
 
             num_examples_per_epoch_for_train = len(items_train)
 
@@ -111,12 +125,17 @@ class Train:
 
             global_step = tf.contrib.framework.get_or_create_global_step()
 
+            lr_modulator = tf.placeholder(tf.float32, shape=(), name="init")
+
             # Decay the learning rate exponentially based on the number of steps.
             lr = tf.train.exponential_decay(cfg.learning_rate,
                                             global_step,
                                             decay_steps,
                                             cfg.learning_rate_decay_factor,
                                             staircase=True)
+
+            lr *= lr_modulator
+
             tf.summary.scalar('learning_rate', lr)
 
             weights_fc = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
@@ -124,7 +143,7 @@ class Train:
 
             opt = tf.train.GradientDescentOptimizer(lr)
 
-            #pre_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
+            pre_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
             train_step = opt.minimize(model.loss, global_step=global_step)
             _start_time = time.time()
             merged = tf.summary.merge_all()
@@ -158,11 +177,25 @@ class Train:
                 #    step = train_step
                 step = train_step
 
+                labels = feed_dict["labels"]
+
+                labels = np.asarray(labels, np.uint32)
+
+                lr_mod = min(i / float(num_batches_per_epoch) / 3.0, 1.0)
+
+                if cfg.dataset is None:
+                    mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))
+                else:
+                    mask = np.bitwise_and(np.reshape(labels, [cfg.batch_size, 1]),
+                                          np.reshape(labels, [1, cfg.batch_size])).astype(dtype=np.bool)
+
                 summary, _, _ = session.run(
                     [merged, model.assignment, step],
                     {
                         model.t_images: feed_dict["images"],
-                        model.t_labels: feed_dict["labels"]
+                        model.t_labels: feed_dict["labels"],
+                        model.t_boolmask: mask,
+                        lr_modulator: lr_mod
                     })
 
                 writer.add_summary(summary, i)
@@ -209,7 +242,11 @@ class Train:
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_dataset, self.b_dataset, self.l_test, self.b_test)
+        and_mode = False
+        if self.cfg.dataset is not None:
+            and_mode = True
+
+        map_train, map_test = evaluate(self.l_dataset, self.b_dataset, self.l_test, self.b_test, and_mode=and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")

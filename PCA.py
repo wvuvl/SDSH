@@ -26,13 +26,15 @@ class PCA:
 
             model = constructor.net(BATCH_SIZE, 24, 0, 0)
 
-            output = model.net['relu7']
+            output = model.net['fc8_custom']
+            #output = model.net['relu7']
 
             session.run(tf.global_variables_initializer())
 
             batches = bp.get_batches()
 
-            m = np.zeros([len(items_train), 4096])
+            m = np.zeros([len(items_train), 24])
+            #m = np.zeros([len(items_train), 4096])
 
             k = 0
             while True:
@@ -45,21 +47,52 @@ class PCA:
                 m[k: k + BATCH_SIZE] = result
                 k += BATCH_SIZE
 
-            print("Starting SVD")
-            print(m.shape)
+
             mean = np.mean(m, 0)
-            print(mean.shape)
+            print(mean)
+            print(np.std(m,0))
 
-            np.save("temp/mean.np", mean)
-
-            m -= mean
-
-            U, s, V = np.linalg.svd(m, full_matrices=False)
-
-            print(U.shape)
-            U = U[0:100, :]
-            print(U.shape)
-            np.save("temp/U", U)
+            #
+            # mean = np.mean(m, 0)
+            # np.save("temp/mean", mean)
+            # print("mean {0}", mean)
+            # np.save("temp/mean", mean)
+            # m -= mean
+            # # get the covariance matrix
+            # Xcov = np.dot(m.T, m)
+            #
+            # # eigenvalue decomposition of the covariance matrix
+            # d, V = np.linalg.eigh(Xcov)
+            #
+            # # a fudge factor can be used so that eigenvectors associated with
+            # # small eigenvalues do not get overamplified.
+            # D = np.diagflat(1.0 / np.sqrt(d[-24:]))
+            #
+            # W = np.dot(V[:,-24:], D)
+            #
+            # np.save("temp/W", W)
+            #
+            # print("Starting SVD")
+            # print(m.shape)
+            # mean = np.mean(m, 0)
+            # print(mean.shape)
+            #
+            # np.save("temp/mean", mean)
+            # print("mean {0}", mean)
+            #
+            # m -= mean
+            #
+            # U, s, V = np.linalg.svd(m, full_matrices=False)
+            #
+            # print(U.shape)
+            # U = U[0:100, :]
+            # print(U.shape)
+            # np.save("temp/U", U)
+            # np.save("temp/V", V)
+            # np.save("temp/s", np.diag(s))
+            # print("U {0}", U.shape)
+            # print("s {0}", s.shape)
+            # print("V {0}", V.shape)
 
 p = PCA()
 p.run()

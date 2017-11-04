@@ -21,29 +21,35 @@ import numpy as np
 def net(batch_size, hash_size, margin=0, weight_decay_factor=0, loss_func=None):
     t_images = tf.placeholder(tf.float32, [None, 224, 224, 3])
     t_labels = tf.placeholder(tf.int32, [None, 1])
+    t_boolmask = tf.placeholder(tf.bool, [batch_size, batch_size])
     model = MatConvNet2TF("data/imagenet-vgg-f_old.mat", input=t_images, ignore=['fc8', 'prob'], do_debug_print=True)
 
     model.t_images = t_images
     model.t_labels = t_labels
+    model.t_boolmask = t_boolmask
+    #
+    # shape = [4096, hash_size]
+    # a = np.random.normal(0.0, 1.0, shape)
+    # u, s, v = np.linalg.svd(a, full_matrices=False)
+    #
+    # weights = u / np.std(u) * 0.01
+    #
+    # fcw = tf.Variable(weights, name='fc8_custom/weights', dtype='float32')
 
-    #shape = [4096, hash_size]
-    #a = np.random.normal(0.0, 1.0, shape)
-    #u, _, v = np.linalg.svd(a, full_matrices=False)
-
-    #weights = u / np.std(u) * 0.01
-
-    #fcw = tf.Variable(weights, name='fc8_custom/weights', dtype='float32')
-
-
-    #mean = np.load("temp/mean.np.npy")
-
-    #U = np.load("temp/U.npy")
-
-    #w = U.T[:, 0:hash_size]
-    #b = np.matmul(-mean, w)
-
-    #fcw = tf.Variable(w, name='fc8_custom/weights', dtype='float32')
-    #fcb = tf.Variable(b, name='fc8_custom/weights', dtype='float32')
+    #
+    # mean = np.load("temp/mean.npy")
+    #
+    # V = np.load("temp/V.npy")
+    # W = np.load("temp/W.npy")
+    # print(np.linalg.det(V))
+    # s = np.load("temp/s.npy")
+    # Is = 1.0 / np.diag(s[:24])
+    # Is = np.diagflat(Is)
+    # w = W#np.matmul(V.T[:, :24], Is)
+    # b = np.matmul(-mean, w)
+    #
+    # fcw = tf.Variable(w, name='fc8_custom/weights', dtype='float32')
+    # fcb = tf.Variable(b, name='fc8_custom/biases', dtype='float32')
 
     fcw = tf.get_variable(name='fc8_custom/weights', shape=[4096, hash_size],
                           initializer=tf.truncated_normal_initializer(stddev=0.01, dtype=tf.float32),
@@ -68,6 +74,6 @@ def net(batch_size, hash_size, margin=0, weight_decay_factor=0, loss_func=None):
 
     if loss_func is not None:
         model.weight_decay = weight_decay * weight_decay_factor
-        model.loss = loss_func(model.output, t_labels, hash_size, batch_size, margin) + model.weight_decay
+        model.loss = loss_func(model.output, t_labels, hash_size, batch_size, margin, boolean_mask=t_boolmask) + model.weight_decay
 
     return model
