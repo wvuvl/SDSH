@@ -39,12 +39,12 @@ cdef inline np.int8_t __hamming_distance(np.uint32_t x, np.uint32_t y):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef np.uint32_t[::1] __to_int32_hashes(np.ndarray[np.float_t, ndim=2] p):
+cdef np.uint32_t[::1] __to_int32_hashes(np.ndarray[np.float32_t, ndim=2] p):
     cdef np.intp_t w = p.shape[1]
     cdef np.intp_t h = p.shape[0]
     cdef np.uint32_t output = 0
     cdef np.uint32_t power = 1
-    cdef np.float_t[:, ::1] p_v = p;
+    cdef np.float32_t[:, ::1] p_v = p;
 
     cdef np.uint32_t[::1] out = np.zeros(h, dtype=np.uint32)
     for x in range(h):
