@@ -181,7 +181,7 @@ class Train:
 
                 labels = np.asarray(labels, np.uint32)
 
-                lr_mod = min(i / float(num_batches_per_epoch) / 3.0, 1.0)
+                lr_mod = 1.0
 
                 if cfg.dataset is None:
                     mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))

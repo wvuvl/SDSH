@@ -26,9 +26,9 @@ if __name__ == '__main__':
             "margin": 2.0,
             "batch_size": 150,
             "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
+            "number_of_epochs_per_decay": 14.0,
             "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.05,
+            "learning_rate": 0.1,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -37,64 +37,9 @@ if __name__ == '__main__':
             "margin": 2.0,
             "batch_size": 150,
             "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.03,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.06,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.02,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.07,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 150.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.08,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 30.0,
-            "weight_decay_factor": 5.0e-5,
-            "learning_rate": 0.08,
+            "number_of_epochs_per_decay": 14.0,
+            "weight_decay_factor": 2.0e-4,
+            "learning_rate": 0.1,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         # {
