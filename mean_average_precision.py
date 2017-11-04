@@ -28,12 +28,12 @@ except:
 
 
 #@timer.timer
-def compute_map(hashes_train, hashes_test, labels_train, labels_test, force_slow=False):
+def compute_map(hashes_train, hashes_test, labels_train, labels_test, and_mode=False, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
     order = calc_hamming_rank(hashes_train, hashes_test, force_slow)
 
     if has_cython and not force_slow:
-        return _mean_average_precision.calc_map(order, labels_train, labels_test)
+        return _mean_average_precision.calc_map(order, labels_train, labels_test, and_mode)
     else:
         print("Warning. Using slow \"compute_map\"")
         s = __compute_s(labels_train, labels_test)
