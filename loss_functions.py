@@ -26,7 +26,7 @@ def __get_triplets(batch_size, ids, boolean_mask):
         positive_pairs = boolean_mask
     eye = np.logical_not(np.eye(batch_size, dtype=np.bool))
     eye = tf.constant(eye, dtype=tf.bool)
-    positive_pairs = tf.logical_and(positive_pairs, eye)
+    #positive_pairs = tf.logical_and(positive_pairs, eye)
     negative_triples = tf.logical_not(tf.reshape(positive_pairs, [batch_size, 1, batch_size]))
     triplets = tf.cast(tf.logical_and(negative_triples, positive_pairs), tf.float32)
     return triplets
