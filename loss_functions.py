@@ -24,12 +24,16 @@ def __get_triplets(batch_size, ids, boolean_mask):
         positive_pairs = tf.equal(ids, tf.reshape(ids, [batch_size]))
     else:
         positive_pairs = boolean_mask
+    negative_pairs = tf.logical_not(positive_pairs)
+
     eye = np.logical_not(np.eye(batch_size, dtype=np.bool))
     eye = tf.constant(eye, dtype=tf.bool)
-    positive_pairs = tf.logical_and(positive_pairs, eye)
-    negative_triples = tf.logical_not(tf.reshape(positive_pairs, [batch_size, 1, batch_size]))
-    triplets = tf.cast(tf.logical_and(negative_triples, positive_pairs), tf.float32)
-    return triplets
+    positive_pairs = tf.logical_and(positive_pairs, eye)  # positive pairs without diagonal
+
+    negative_triples = tf.reshape(negative_pairs, [batch_size, 1, batch_size])
+
+    triplets = tf.logical_and(negative_triples, positive_pairs)
+    return tf.cast(triplets, tf.float32), tf.cast(negative_pairs, tf.float32)
 
 
 def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_mask = None):
@@ -116,7 +120,7 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolea
 
         negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
         dqmp = distance - negative_distance
-        triplets = __get_triplets(batch_size, ids, boolean_mask)
+        triplets, negative_pairs = __get_triplets(batch_size, ids, boolean_mask)
 
         # strain
         # max_distance - distance. max_distance == 2
@@ -134,14 +138,17 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolea
         E = triplets * (Kp*tf.square(twol+alpha-d)/(twol+alpha)**2 + C)
 
         """
-
         epsilon = 1e-8
         d = tf.sqrt(4.0 - dqmp + epsilon)
         twol = 8**0.5
 
         E = triplets * tf.square(twol - d)
 
-        loss = tf.reduce_sum(E) / tf.reduce_sum(triplets)
+        d2 = tf.sqrt(6.0 + distance)
+
+        E2 = negative_pairs * tf.square(twol - d2)
+
+        loss = (tf.reduce_sum(E) + tf.reduce_sum(E2)) / (tf.reduce_sum(triplets) + tf.reduce_sum(negative_pairs))
         return loss
 
 """
