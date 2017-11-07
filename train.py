@@ -150,7 +150,7 @@ class Train:
             writer = tf.summary.FileWriter(directory, flush_secs=10, graph=session.graph)
 
             session.run(tf.global_variables_initializer())
-            saver = tf.train.Saver(keep_checkpoint_every_n_hours=1.0)
+            saver = tf.train.Saver(max_to_keep=2)
 
             lc = tf.train.latest_checkpoint(directory)
 
