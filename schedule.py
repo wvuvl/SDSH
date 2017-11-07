@@ -15,19 +15,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-5,
-            "learning_rate": 0.045,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
-            "loss": "loss_spring",
-            "hash_size": 24,
-            "margin": 2.0,
-            "batch_size": 150,
-            "total_epoch_count": 70,
-            "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-5,
-            "learning_rate": 0.04,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -37,8 +26,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -48,8 +37,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -59,8 +48,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -70,8 +59,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -81,8 +70,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -92,8 +81,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -103,8 +92,8 @@ if __name__ == '__main__':
             "batch_size": 150,
             "total_epoch_count": 70,
             "number_of_epochs_per_decay": 14.0,
-            "weight_decay_factor": 1.0e-4,
-            "learning_rate": 0.045,
+            "weight_decay_factor": 2.0e-5,
+            "learning_rate": 0.06,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         # {
