@@ -328,6 +328,20 @@ if __name__ == '__main__':
         #     "learning_rate_decay_factor": 2.0 / 3.0
         # }
     ]
+    for ec in [70,150,200,100]:
+        for lr in [0.03,0.024,0.05,0.07,0.001]:
+            for wd in [5e-5,0.001,0.05]:
+                experiments.append({
+                    "loss": "loss_accv_mod",
+                    "hash_size": 24,
+                    "margin": 0.5,
+                    "batch_size": 150,
+                    "total_epoch_count": ec,
+                    "number_of_epochs_per_decay": 20.0,
+                    "weight_decay_factor": wd,
+                    "learning_rate": lr,
+                    "learning_rate_decay_factor": 2.0 / 3.0
+                })
 
     for e in experiments:
         train.run(path, e)
