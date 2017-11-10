@@ -95,11 +95,15 @@ class Train:
 
             items_test = []
             items_train = []
+            items_db = []
+
             if cfg.dataset is None:
                 with open('temp/items_train.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
                 with open('temp/items_test.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
+                with open('temp/items_db.pkl', 'rb') as pkl:
+                    items_db = pickle.load(pkl)
             elif "nus":
                 with open('temp/items_train_nuswide.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
@@ -213,10 +217,10 @@ class Train:
                 logger.debug(format_str % (i, examples_per_sec, sec_per_batch))
 
                 if (i % 2000 == 0) and i != 0:
-                    self.TestAndSaveCheckpoint(model, session, items_train, items_test, cfg.hash_size,
+                    self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                                directory, embedding_conf, saver, global_step, feed_dict)
 
-            self.TestAndSaveCheckpoint(model, session, items_train, items_test, cfg.hash_size,
+            self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
 
@@ -225,7 +229,8 @@ class Train:
         with open(os.path.join(directory, "Done.txt"), "a") as file:
             file.write("\n")
 
-    def TestAndSaveCheckpoint(self, model, session, items_train, items_test, hash_size,
+
+    def TestAndSaveCheckpoint(self, model, session, items_train, items_test, items_db, hash_size,
                               directory, embedding_conf, saver, global_step, feed_dict=None):
         saver.save(session, os.path.join(directory, "checkpoint"), global_step)
 
@@ -236,8 +241,8 @@ class Train:
             file.close()
 
         self.logger.info("Start generating hashes")
-        self.l_dataset, self.b_dataset, self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_train, items_test, hash_size)
+        self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
+                                       model.output, session, items_train, items_test, items_db, hash_size)
 
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
@@ -246,7 +251,7 @@ class Train:
         if self.cfg.dataset is not None:
             and_mode = True
 
-        map_train, map_test = evaluate(self.l_dataset, self.b_dataset, self.l_test, self.b_test, and_mode=and_mode)
+        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, and_mode=and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
@@ -386,13 +391,13 @@ class Train:
             for i in range(int(TOTAL_EPOCHS_COUNT * num_batches_per_epoch)):
                 summary, _ = session.run([merged, train_step],
                                          {
-                                             input_hash:  self.b_dataset[k * batch_size:k * batch_size + batch_size],
-                                             input_label:  self.l_dataset[k * batch_size:k * batch_size + batch_size],
+                                             input_hash:  self.b_train[k * batch_size:k * batch_size + batch_size],
+                                             input_label:  self.l_train[k * batch_size:k * batch_size + batch_size],
                                          })
                 writer.add_summary(summary, i)
 
                 k +=1
-                if (k+1) * batch_size >= len(self.b_dataset):
+                if (k+1) * batch_size >= len(self.b_train):
                     k = 0
 
                 current_time = time.time()
@@ -406,15 +411,17 @@ class Train:
                               'sec/batch)')
                 print(format_str % (time.time(), i, examples_per_sec, sec_per_batch))
 
-            b_full = tf.constant(self.b_dataset, dtype=tf.float32)
+            b_train = tf.constant(self.b_train, dtype=tf.float32)
+            b_full = tf.constant(self.b_db, dtype=tf.float32)
             b_test_full = tf.constant(self.b_test, dtype=tf.float32)
             b_dataset_r = session.run(tf.matmul(b_full, rot), {})
+            b_train_r = session.run(tf.matmul(b_train, rot), {})
             b_test_r = session.run(tf.matmul(b_test_full, rot), {})
 
         self.logger.info("Finished learning rotation")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_dataset, b_dataset_r, self.l_test, b_test_r)
+        map_train, map_test = evaluate(self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_dataset_r)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write("Rotation: " + str(map_train) + "\t" + str(map_test) + "\n")
