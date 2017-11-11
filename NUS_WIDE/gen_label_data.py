@@ -6,7 +6,9 @@ import pickle
 
 images = []
 
-for root, dirs, files in os.walk("image"):
+path = "../data/nus_wide"
+
+for root, dirs, files in os.walk(os.path.join(path, "image")):
 	root_ = os.path.basename(root)
 	for f in files:
 		key = "{0}\{1}".format(root_, f)
@@ -14,17 +16,17 @@ for root, dirs, files in os.walk("image"):
 		
 images = set(images)
 		
-with open("ImageList/ImageList.txt") as f:
-    content = f.readlines()
+with open(os.path.join(path, "ImageList/ImageList.txt")) as f:
+	content = f.readlines()
 content = [x.strip() for x in content]
 
 print(len(content))
 labels = {}
 
-for root, dirs, files in os.walk("Groundtruth/AllLabels"):
+for root, dirs, files in os.walk(os.path.join(path, "Groundtruth/AllLabels")):
 	for f in files:
 		print(f)
-		with open(os.path.join("Groundtruth/AllLabels", f)) as file:
+		with open(os.path.join(os.path.join(path, "Groundtruth/AllLabels"), f)) as file:
 			lcontent = file.readlines()
 		attribute = np.asarray([int(x.strip()) for x in lcontent])
 		labels[f] = attribute
@@ -110,14 +112,14 @@ print("Count of train items: {0}".format(len(items_train)))
 shuffle(items_train)
 shuffle(items_test)   
 
-if not os.path.exists('temp'):   
-    os.makedirs('temp')   
+if not os.path.exists('../temp'):
+    os.makedirs('../temp')
 
-output = open('temp/items_train_nuswide.pkl', 'wb')   
-pickle.dump(items_train, output)   
-output.close()   
+output = open('../temp/items_train_nuswide.pkl', 'wb')
+pickle.dump(items_train, output)
+output.close()
 
-output = open('temp/items_test_nuswide.pkl', 'wb')   
-pickle.dump(items_test, output)   
+output = open('../temp/items_test_nuswide.pkl', 'wb')
+pickle.dump(items_test, output)
 output.close()
 
