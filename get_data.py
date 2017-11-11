@@ -14,6 +14,7 @@
 # ==============================================================================
 """Download all needed data to start training the network"""
 
+import os
 from utils.download import download
 
 data_path = "data/"
@@ -21,3 +22,5 @@ data_path = "data/"
 download(directory=data_path, url="https://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz", extract_targz=True)
 download(directory=data_path, google_drive_fileid="0B3kP5zWXwFm_OUpQbDFqY2dXNGs", file_name="imagenet-vgg-f_old.mat")
 #download(directory=data_path, url="http://www.vlfeat.org/matconvnet/models/imagenet-vgg-f.mat")
+nus_wide = os.path.join(data_path, "nus_wide")
+download(directory=nus_wide, google_drive_fileid="1lYKyqLqrEiuMXZ-63ZZC2G7u6cn_2VOV", extract_zip=True)
