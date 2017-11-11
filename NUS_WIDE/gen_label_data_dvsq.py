@@ -7,7 +7,9 @@ import pickle
 
 images = []
 
-for root, dirs, files in os.walk("out"):
+path = "../data/nus_wide"
+
+for root, dirs, files in os.walk(os.path.join(path, "image")):
     root_ = os.path.basename(root)
     for f in files:
         key = "{0}\{1}".format(root_, f)
@@ -15,17 +17,17 @@ for root, dirs, files in os.walk("out"):
         
 images = set(images)
         
-with open("./ImageList/ImageList.txt") as f:
+with open(os.path.join(path, "ImageList/ImageList.txt")) as f:
     content = f.readlines()
 content = [x.strip() for x in content]
 
 print(len(content))
 labels = {}
 
-for root, dirs, files in os.walk("./Groundtruth/AllLabels"):
+for root, dirs, files in os.walk(os.path.join(path, "Groundtruth/AllLabels")):
     for f in files:
         print(f)
-        with open(os.path.join("./Groundtruth/AllLabels", f)) as file:
+        with open(os.path.join(os.path.join(path, "Groundtruth/AllLabels"), f)) as file:
             lcontent = file.readlines()
         attribute = np.asarray([int(x.strip()) for x in lcontent])
         labels[f] = attribute
@@ -138,20 +140,20 @@ shuffle(items_database)
 if not os.path.exists('temp'):   
     os.makedirs('temp')   
 
-output = open('./temp/items_uniform_train_nuswide.pkl', 'wb')   
-pickle.dump(items_train, output)   
+output = open('../temp/items_uniform_train_nuswide.pkl', 'wb')   
+pickle.dump(items_train, output
 output.close()   
 
-output = open('./temp/items_uniform_test_nuswide.pkl', 'wb')   
-pickle.dump(items_test, output)   
+output = open('../temp/items_uniform_test_nuswide.pkl', 'wb')   
+pickle.dump(items_test, output)
 output.close()
 
-output = open('./temp/items_uniform_db_nuswide.pkl', 'wb')   
-pickle.dump(items_database, output)   
+output = open('../temp/items_uniform_db_nuswide.pkl', 'wb')   
+pickle.dump(items_database, output)
 output.close()
 
 def write_txt_file(data,name):
-    with open('./temp/{}.txt'.format(name),'w') as outF:
+    with open('../temp/{}.txt'.format(name),'w') as outF:
         for (label,fname) in data:
             fname = fname.replace('\\','/')
             outF.write('{}/out/{} '.format(os.getcwd(),fname))
