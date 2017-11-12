@@ -16,7 +16,7 @@ for root, dirs, files in os.walk(os.path.join(path, "image")):
         
 images = set(images)
         
-with open(os.path.join(path, "ImageList/ImageList.txt")) as f:
+with open(os.path.join(path, "ImageList/Imagelist.txt")) as f:
     content = f.readlines()
 content = [x.strip() for x in content]
 
