@@ -7,8 +7,8 @@ if __name__ == '__main__':
     train = Train()
 
     experiments = [
-	
-		# CIFAR10
+    
+        # CIFAR10
         {
             "loss": "loss_spring",
             "hash_size": 24,
