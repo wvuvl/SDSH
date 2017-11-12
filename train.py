@@ -30,6 +30,7 @@ class Train:
         self.b_dataset = None
         self.l_test = None
         self.b_test = None
+        self.and_mode = False
 
         log_main = logging.getLogger()
         log_main.setLevel(logging.INFO)
@@ -96,20 +97,47 @@ class Train:
             items_test = []
             items_train = []
             items_db = []
+            self.and_mode = False
 
             if cfg.dataset is None:
                 with open('temp/items_train.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
                 with open('temp/items_test.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
-                with open('temp/items_db.pkl', 'rb') as pkl:
-                    items_db = pickle.load(pkl)
-            elif "nus":
-                with open('temp/items_train_nuswide.pkl', 'rb') as pkl:
+            elif cfg.dataset == "cifar_reduced":
+                with open('temp/items_train_cifar_reduced.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide.pkl', 'rb') as pkl:
+                with open('temp/items_test_cifar_reduced.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
-                    items_train = items_train[:156700]
+                with open('temp/items_db_cifar_reduced.pkl', 'rb') as pkl:
+                    items_db = pickle.load(pkl)
+            elif cfg.dataset == "nus2100.10500":
+                with open('temp/items_train_nuswide_2100.10500.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/items_test_nuswide_2100.10500.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+                with open('temp/items_db_nuswide_2100.10500.pkl', 'rb') as pkl:
+                    items_db = pickle.load(pkl)
+                self.and_mode = True
+            elif cfg.dataset == "nus5000.10000":
+                with open('temp/items_train_nuswide_5000.10000.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/items_test_nuswide_5000.10000.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+                with open('temp/items_db_nuswide_5000.10000.pkl', 'rb') as pkl:
+                    items_db = pickle.load(pkl)
+                self.and_mode = True
+            elif cfg.dataset == "nus10000._":
+                with open('temp/items_train_nuswide_10000._.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/items_test_nuswide_10000._.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+                self.and_mode = True
+                items_train = items_train[:156700]
+
+            if len(items_db) > 0:
+                l = (len(items_db) // 100) * 100
+                items_db = items_db[:l]
 
             num_examples_per_epoch_for_train = len(items_train)
 
@@ -154,7 +182,7 @@ class Train:
             writer = tf.summary.FileWriter(directory, flush_secs=10, graph=session.graph)
 
             session.run(tf.global_variables_initializer())
-            saver = tf.train.Saver(max_to_keep=2)
+            saver = tf.train.Saver(max_to_keep=1)
 
             lc = tf.train.latest_checkpoint(directory)
 
@@ -241,17 +269,23 @@ class Train:
             file.close()
 
         self.logger.info("Start generating hashes")
-        self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_train, items_test, items_db, hash_size)
+
+        self.l_train, self.b_train = gen_hashes(model.t_images, model.t_labels,
+                                       model.output, session, items_train, hash_size)
+
+        self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
+                                       model.output, session, items_test, hash_size, 1)
+
+        if items_db is not None:
+            self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
+                                       model.output, session, items_db, hash_size)
+        else:
+            self.l_db, self.b_db = self.l_train, self.b_train
 
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        and_mode = False
-        if self.cfg.dataset is not None:
-            and_mode = True
-
-        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, and_mode=and_mode)
+        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, and_mode=self.and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
@@ -329,37 +363,6 @@ class Train:
 
             tf.summary.scalar('loss', loss)
             tf.summary.scalar('reg', reg)
-
-
-            #size = 50000
-            #b = tf.constant(self.b_dataset, dtype=tf.float32)
-            #l = tf.constant(self.l_dataset, dtype=tf.float32)
-
-            #b_rn = tf.nn.l2_normalize(b_r, 1)
-
-            epsilon = 1e-9
-
-            #loss_list = []
-            #for i in range(10):
-            ##    s = tf.cast(tf.equal(l, i), tf.float32)
-            #   h = tf.reduce_mean(b_r * s, 0)
-            #    #loss_ = -tf.reduce_mean(tf.exp(0.2 * tf.log(tf.abs(b_r) + epsilon)))
-            #    loss_ = tf.reduce_mean(tf.square(1.0 - tf.abs(h)))
-            #    loss_list.append(loss_)
-
-            #loss = tf.add_n(loss_list)
-
-            #b_rn_mean = tf.reduce_mean(b_rn, 0)
-            #loss2 = tf.reduce_mean(tf.square(1.0 - tf.abs(b_r)))
-            #loss3 = -tf.reduce_mean(tf.exp(0.2 * tf.reduce_sum(tf.log(tf.abs(b_rn) + epsilon), 1)))
-
-            #loss_total = loss# + reg
-
-            #tf.summary.scalar('loss', loss)
-            #tf.summary.scalar('loss2', loss2)
-            #tf.summary.scalar('loss3', loss3)
-            #tf.summary.scalar('loss_total', loss_total)
-            #tf.summary.scalar('reg', reg)
 
             num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / batch_size
             decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
