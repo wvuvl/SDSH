@@ -119,9 +119,11 @@ class BatchProvider:
                 image = misc.imresize(item[1], self.image_size, interp='bilinear')
             else:
                 with self.env.begin() as txn:
+
                     buf = txn.get(item[1].encode('ascii'))
                     buffer.seek(0)
                     buffer.write(buf)
+                    buffer.seek(0) 
                     image = misc.imread(buffer)
                     #misc.imsave(str(i) + "_" + str(item[0])+ "test.jpg", image)
             # Data augmentation. Should be removed from here
