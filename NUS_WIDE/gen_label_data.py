@@ -65,10 +65,10 @@ print(labels_ids)
 items = {}
 number_of_two_and_more = 0
 
-categorized = {key: [] for key in range(81)}
+categorized = {key: [] for (key, _) in labels}
 
 bitfilter = 0
-for (l,a) in keptlabels:
+for (l, a) in keptlabels:
     bitfilter |= labels_ids[l]
 
 print('kept labels {}'.format(keptlabels))
@@ -85,10 +85,13 @@ for i in range(len(content)):
     if label != 0 and content[i] in images and (label & bitfilter) != 0:
         items[i] = ((label, content[i]))
         #print((label, content[i]))
-        for id in range(81):
-            if (label & (1<<id)) != 0:
-                categorized[id].append(i)
+        for l, id in labels_ids.items():
+            if (label & id) != 0:
+                categorized[l].append(i)
 
+keptlabels_ = [l for (l, a) in keptlabels]
+
+categorized = {k: v for (k, v) in categorized.items() if k in keptlabels_}
 
 print("Count of items with at least one label: {0}".format(len(items)))
 print("Count of items with more than one label: {0}".format(number_of_two_and_more))
@@ -100,6 +103,9 @@ styles= {
 }
 
 def generate(style):
+    print("Running:")
+    print(style)
+
     test_data = set()
     train_data = set()
     
@@ -108,8 +114,7 @@ def generate(style):
     items_database = []
 
     if style == '10000._':
-        for id in range(21):
-            l = categorized[id]
+        for label ,l in categorized.items():
             shuffle(l)
             num = 0
             for l_it in l:
@@ -125,8 +130,7 @@ def generate(style):
                 items_train.append(items[i])
     
     elif style == '2100.10500':
-        for id in range(21):
-            l = categorized[id]
+        for label ,l in categorized.items():
             shuffle(l)
             num = 0
             for l_it in l:
