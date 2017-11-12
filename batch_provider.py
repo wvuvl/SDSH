@@ -33,7 +33,7 @@ except ImportError:
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
-    def __init__(self, batch_size, items, cycled=True, width=224, height=224):
+    def __init__(self, batch_size, items, cycled=True, worker=16, width=224, height=224):
         self.items = items
         shuffle(self.items)
         self.batch_size = batch_size
@@ -43,6 +43,7 @@ class BatchProvider:
         self.done = False
         self.image_size = (width, height)
         self.lock = Lock()
+        self.worker = worker
         self.quit_event = Event()
 
         self.q = queue.Queue(16)
@@ -56,7 +57,7 @@ class BatchProvider:
 
     def get_batches(self):
         workers = []
-        for i in range(16):
+        for i in range(self.worker):
             worker = Thread(target=self._worker)
             worker.setDaemon(True)
             worker.start()

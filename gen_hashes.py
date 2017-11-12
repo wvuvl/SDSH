@@ -8,12 +8,35 @@ import tensorflow as tf
 BATCH_SIZE = 100 # must be a divider of 10000 and 50000
 
 
-def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_size):
+def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, items_db, hash_size):
+    bp_db = batch_provider.BatchProvider(BATCH_SIZE, items_db, cycled=False)
+    bp_test = batch_provider.BatchProvider(BATCH_SIZE, items_test, worker=1, cycled=False)
     bp_train = batch_provider.BatchProvider(BATCH_SIZE, items_train, cycled=False)
-    bp_test = batch_provider.BatchProvider(BATCH_SIZE, items_test, cycled=False)
 
-    b_dataset = np.zeros([len(items_train), hash_size])
-    l_dataset = np.zeros([len(items_train), 1], dtype=np.int32)
+    b_database = np.zeros([len(items_db), hash_size])
+    l_database = np.zeros([len(items_db), 1], dtype=np.int32)
+
+    batches_db = bp_db.get_batches()
+
+    k = 0
+
+    while True:
+        feed_dict = next(batches_db)
+        if feed_dict is None:
+            break
+
+        result = sess.run(outputs, {t_images: feed_dict["images"], t_labels: feed_dict["labels"]})
+
+        b_database[k: k + BATCH_SIZE] = result
+        l_database[k: k + BATCH_SIZE] = feed_dict["labels"]
+
+        k += BATCH_SIZE
+
+    assert(len(b_database) == k)
+    assert(len(l_database) == k)
+
+    b_train = np.zeros([len(items_train), hash_size])
+    l_train = np.zeros([len(items_train), 1], dtype=np.int32)
 
     batches_train = bp_train.get_batches()
 
@@ -26,13 +49,13 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
 
         result = sess.run(outputs, {t_images: feed_dict["images"], t_labels: feed_dict["labels"]})
 
-        b_dataset[k: k + BATCH_SIZE] = result
-        l_dataset[k: k + BATCH_SIZE] = feed_dict["labels"]
+        b_train[k: k + BATCH_SIZE] = result
+        l_train[k: k + BATCH_SIZE] = feed_dict["labels"]
 
         k += BATCH_SIZE
 
-    assert(len(b_dataset) == k)
-    assert(len(l_dataset) == k)
+    assert(len(b_train) == k)
+    assert(len(l_train) == k)
 
     b_test = np.empty([len(items_test), hash_size])
     l_test = np.empty([len(items_test), 1], dtype=np.int32)
@@ -56,7 +79,7 @@ def gen_hashes(t_images, t_labels, outputs, sess, items_train, items_test, hash_
     assert (len(b_test) == k)
     assert (len(l_test) == k)
 
-    return l_dataset, b_dataset, l_test, b_test
+    return l_train, b_train, l_test, b_test, l_database, b_database
 
 
 def test():
@@ -78,11 +101,11 @@ def test():
     with open('items_test.pkl', 'rb') as pkl:
         items_test = pickle.load(pkl)
 
-        l_dataset, b_dataset, l_test, b_test = gen_hashes(model.t_images, model.t_labels, output, sess, items_train, items_test, 24)
+        l_train, b_train, l_test, b_test, l_database, b_database = gen_hashes(model.t_images, model.t_labels, output, sess, items_train, items_test, 24)
 
     output = open('b_dataset.pkl', 'wb')
-    pickle.dump(l_dataset, output)
-    pickle.dump(b_dataset, output)
+    pickle.dump(l_database, output)
+    pickle.dump(b_database, output)
     output.close()
     output = open('b_test.pkl', 'wb')
     pickle.dump(l_test, output)
