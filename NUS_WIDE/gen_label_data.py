@@ -50,11 +50,12 @@ for (l, a) in labels:
 
 keptlabels = labels[-21:]
 
+labels = labels[-31:]
 
 labels_ids = {}
 with open('labels.txt', 'w') as f:
     i = 0
-    for (l, a) in labels:
+    for (l, a) in reversed(labels):
         id = 1 << i
         print("{0} {1}".format(id, l))
         i += 1
