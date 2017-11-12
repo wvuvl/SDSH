@@ -276,7 +276,7 @@ class Train:
         self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
                                        model.output, session, items_test, hash_size, 1)
 
-        if items_db is not None:
+        if len(items_db) > 0:
             self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
                                        model.output, session, items_db, hash_size)
         else:
