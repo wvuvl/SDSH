@@ -6,9 +6,632 @@ if __name__ == '__main__':
 
     train = Train()
 
-
     experiments = [
+	
+		# CIFAR10
         {
+            "loss": "loss_spring",
+            "hash_size": 24,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 32,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 8,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 4,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_spring",
+            "hash_size": 48,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 40,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.15,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 24,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 16,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 8,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 4,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 32,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+            "loss": "loss_accv_mod",
+            "hash_size": 48,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+
+		
+		# NUS_WIDE 2100.10500
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 24,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 32,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 8,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 4,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_spring",
+            "hash_size": 48,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 40,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.15,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 24,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 16,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 8,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 4,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 32,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus2100.10500"
+            "loss": "loss_accv_mod",
+            "hash_size": 48,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+		
+		
+		# NUS_WIDE 5000.10000
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 24,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 32,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 8,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 4,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_spring",
+            "hash_size": 48,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 40,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.15,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 24,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 16,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 8,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 4,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 32,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "nus5000.10000"
+            "loss": "loss_accv_mod",
+            "hash_size": 48,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+		
+		# NUS_WIDE 10000._
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 24,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 32,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 16,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 30,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 8,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 4,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_spring",
+            "hash_size": 48,
+            "margin": 2.0,
+            "batch_size": 150,
+            "total_epoch_count": 40,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.15,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 24,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 16,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 8,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 4,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 32,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+        {
+			"dataset": "10000._"
+            "loss": "loss_accv_mod",
+            "hash_size": 48,
+            "margin": 0.5,
+            "batch_size": 150,
+            "total_epoch_count": 36,
+            "number_of_epochs_per_decay": 10.0,
+            "weight_decay_factor": 0.0005,
+            "learning_rate": 0.1,
+            "learning_rate_decay_factor": 2.0 / 3.0
+        },
+		
+        # Reduced CIFAR10
+        {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 24,
             "margin": 2.0,
@@ -20,6 +643,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 16,
             "margin": 2.0,
@@ -31,6 +655,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 32,
             "margin": 2.0,
@@ -42,6 +667,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 16,
             "margin": 2.0,
@@ -53,17 +679,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_spring",
-            "hash_size": 12,
-            "margin": 2.0,
-            "batch_size": 100,
-            "total_epoch_count": 120,
-            "number_of_epochs_per_decay": 100.0,
-            "weight_decay_factor": 0.0002,
-            "learning_rate": 0.07,
-            "learning_rate_decay_factor": 2.0 / 3.0
-        },
-        {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 8,
             "margin": 2.0,
@@ -75,6 +691,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 4,
             "margin": 2.0,
@@ -86,6 +703,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_spring",
             "hash_size": 48,
             "margin": 2.0,
@@ -97,6 +715,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 24,
             "margin": 0.5,
@@ -108,6 +727,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 16,
             "margin": 0.5,
@@ -119,6 +739,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 32,
             "margin": 0.5,
@@ -130,6 +751,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 12,
             "margin": 0.5,
@@ -141,6 +763,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 8,
             "margin": 0.5,
@@ -152,6 +775,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 4,
             "margin": 0.5,
@@ -163,6 +787,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
+			"dataset": "cifar_reduced"
             "loss": "loss_accv_mod",
             "hash_size": 48,
             "margin": 0.5,
@@ -173,6 +798,18 @@ if __name__ == '__main__':
             "learning_rate": 0.05,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
+        
+        # {
+        #     "loss": "loss_accv",
+        #     "hash_size": 24,
+        #     "margin": 12,
+        #     "batch_size": 150,
+        #     "total_epoch_count": 100,
+        #     "number_of_epochs_per_decay": 20.0,
+        #     "weight_decay_factor": 0.0011,
+        #     "learning_rate": 0.000225,
+        #     "learning_rate_decay_factor": 2.0 / 3.0
+        # },
         # {
         #     "loss": "loss_accv",
         #     "hash_size": 24,
