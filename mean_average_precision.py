@@ -28,16 +28,16 @@ except:
 
 
 #@timer.timer
-def compute_map(hashes_train, hashes_test, labels_train, labels_test, and_mode=False, force_slow=False):
+def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, and_mode=False, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
     order = calc_hamming_rank(hashes_train, hashes_test, force_slow)
 
     if has_cython and not force_slow:
-        return _mean_average_precision.calc_map(order, labels_train, labels_test, and_mode)
+        return _mean_average_precision.calc_map(order, labels_train, labels_test, top_n, and_mode)
     else:
         print("Warning. Using slow \"compute_map\"")
         s = __compute_s(labels_train, labels_test)
-        return __calc_map(order, np.transpose(s))
+        return __calc_map(order, np.transpose(s), top_n)
 
 
 def __compute_s(train_l, test_l):
@@ -48,13 +48,15 @@ def __compute_s(train_l, test_l):
     return np.equal(d, 0)
 
 
-def __calc_map(order, s):
+def __calc_map(order, s, top_n):
     """compute mean average precision (MAP)"""
     Q, N = s.shape
-    pos = np.asarray(range(1, N + 1), dtype=np.float32)
+    if top_n == 0:
+        top_n = N
+    pos = np.asarray(range(1, top_n + 1), dtype=np.float32)
     map = 0
     for q in range(Q):
-        relevance = s[q, order[q, :]].astype(np.float32)
+        relevance = s[q, order[q, :top_n]].astype(np.float32)
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[-1:]
         precision = cumulative / pos
