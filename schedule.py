@@ -421,7 +421,7 @@ if __name__ == '__main__':
         },
 
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 24,
             "margin": 0.5,
@@ -433,7 +433,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 16,
             "margin": 0.5,
@@ -445,7 +445,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 8,
             "margin": 0.5,
@@ -457,7 +457,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 4,
             "margin": 0.5,
@@ -469,7 +469,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 32,
             "margin": 0.5,
@@ -481,7 +481,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "dataset": "10000._",
+            "dataset": "nus10000._",
             "loss": "loss_accv_mod",
             "hash_size": 48,
             "margin": 0.5,
