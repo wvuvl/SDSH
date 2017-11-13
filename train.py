@@ -139,6 +139,15 @@ class Train:
                 l = (len(items_db) // 100) * 100
                 items_db = items_db[:l]
 
+            l = (len(items_train) // 100) * 100
+            items_train = items_train[:l]
+            print(len(items_db))
+            print(len(items_train))
+
+            assert(len(items_db) % 100 == 0)
+            assert(len(items_train) % 100 == 0)
+            assert(len(items_test) % 100 == 0)
+
             num_examples_per_epoch_for_train = len(items_train)
 
             bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True)
