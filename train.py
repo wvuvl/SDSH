@@ -31,6 +31,7 @@ class Train:
         self.l_test = None
         self.b_test = None
         self.and_mode = False
+        self.top_n = 0
 
         log_main = logging.getLogger()
         log_main.setLevel(logging.INFO)
@@ -53,6 +54,7 @@ class Train:
                 self.learning_rate = 0
                 self.total_epoch_count = 0
                 self.dataset = None
+                self.top_n = 0
 
         cfg = Cfg()
         self.cfg = cfg
@@ -67,6 +69,8 @@ class Train:
 
         directory = os.path.join(path, name)
         self.directory = directory
+
+        self.top_n = cfg.top_n
 
         logging.info("Starting {0}...".format(name))
 
@@ -121,6 +125,7 @@ class Train:
                 with open('temp/items_db_nuswide_2100.10500.pkl', 'rb') as pkl:
                     items_db = pickle.load(pkl)
                 self.and_mode = True
+                self.top_n = 5000
             elif cfg.dataset == "nus5000.10000":
                 with open('temp/items_train_nuswide_5000.10000.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
@@ -129,10 +134,11 @@ class Train:
                 with open('temp/items_db_nuswide_5000.10000.pkl', 'rb') as pkl:
                     items_db = pickle.load(pkl)
                 self.and_mode = True
-            elif cfg.dataset == "nus10000._":
-                with open('temp/items_train_nuswide_10000._.pkl', 'rb') as pkl:
+                self.top_n = 5000
+            elif cfg.dataset == "nus2100._":
+                with open('temp/items_train_nuswide_2100._.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide_10000._.pkl', 'rb') as pkl:
+                with open('temp/items_test_nuswide_2100._.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
                 self.and_mode = True
 
@@ -227,7 +233,7 @@ class Train:
 
                 lr_mod = 1.0
 
-                if cfg.dataset is None:
+                if self.and_mode:
                     mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))
                 else:
                     mask = np.bitwise_and(np.reshape(labels, [cfg.batch_size, 1]),
@@ -297,20 +303,20 @@ class Train:
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, and_mode=self.and_mode)
+        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
         self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
 
     def Rotation(self, hash_size, directory):
-        NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
-        NUM_EPOCHS_PER_DECAY = 50.0
+        NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = len(self.b_train)
+        NUM_EPOCHS_PER_DECAY = 10.0
         LEARNING_RATE_DECAY_FACTOR = 0.5
 
         CLAMP = 0.03
         INITIAL_LEARNING_RATE = 0.07
-        TOTAL_EPOCHS_COUNT = 100
+        TOTAL_EPOCHS_COUNT = 30
 
         self.logger.info("Rotation")
 
@@ -358,15 +364,18 @@ class Train:
             #b_r = tf.nn.l2_normalize(b_r, 1)
 
             batch_size = 1000
-            positive_pairs = tf.cast(tf.equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
-            negative_triples = tf.cast(tf.not_equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
+
+            t_boolmask = tf.placeholder(tf.bool, [batch_size, batch_size])
+
+            positive_pairs = tf.cast(t_boolmask, tf.float32)
+            negative_pairs = tf.cast(tf.logical_not(t_boolmask), tf.float32)
 
             mul = tf.multiply(tf.reshape(b_r, [1, batch_size, hash_size]), tf.reshape(b_r, [batch_size, 1, hash_size]))
 
             mul = tf.maximum(mul, -CLAMP)
             mul = tf.minimum(mul, CLAMP)
 
-            negative = tf.reshape(negative_triples, [batch_size, batch_size, 1]) * mul / CLAMP
+            negative = tf.reshape(negative_pairs, [batch_size, batch_size, 1]) * mul / CLAMP
             positive = tf.reshape(positive_pairs, [batch_size, batch_size, 1]) * mul / CLAMP
 
             reg = tf.reduce_mean(tf.square(tf.matmul(r, r, transpose_b=True) - tf.eye(hash_size)))
@@ -404,10 +413,18 @@ class Train:
 
             k = 0
             for i in range(int(TOTAL_EPOCHS_COUNT * num_batches_per_epoch)):
+                labels = self.l_train[k * batch_size:k * batch_size + batch_size]
+                if self.and_mode:
+                    mask = np.equal(np.reshape(labels, [batch_size, 1]), np.reshape(labels, [1, batch_size]))
+                else:
+                    mask = np.bitwise_and(np.reshape(labels, [batch_size, 1]),
+                                          np.reshape(labels, [1, batch_size])).astype(dtype=np.bool)
+
                 summary, _ = session.run([merged, train_step],
                                          {
                                              input_hash:  self.b_train[k * batch_size:k * batch_size + batch_size],
                                              input_label:  self.l_train[k * batch_size:k * batch_size + batch_size],
+                                             t_boolmask: mask,
                                          })
                 writer.add_summary(summary, i)
 
@@ -426,17 +443,17 @@ class Train:
                               'sec/batch)')
                 print(format_str % (time.time(), i, examples_per_sec, sec_per_batch))
 
-            b_train = tf.constant(self.b_train, dtype=tf.float32)
-            b_full = tf.constant(self.b_db, dtype=tf.float32)
-            b_test_full = tf.constant(self.b_test, dtype=tf.float32)
-            b_dataset_r = session.run(tf.matmul(b_full, rot), {})
-            b_train_r = session.run(tf.matmul(b_train, rot), {})
-            b_test_r = session.run(tf.matmul(b_test_full, rot), {})
+            tf_b_train = tf.constant(self.b_train, dtype=tf.float32)
+            tf_b_db = tf.constant(self.b_db, dtype=tf.float32)
+            tf_b_test = tf.constant(self.b_test, dtype=tf.float32)
+            b_dataset_r = session.run(tf.matmul(tf_b_db, rot), {})
+            b_train_r = session.run(tf.matmul(tf_b_train, rot), {})
+            b_test_r = session.run(tf.matmul(tf_b_test, rot), {})
 
         self.logger.info("Finished learning rotation")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_dataset_r)
+        map_train, map_test = evaluate(self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_dataset_r, top_n=self.top_n)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write("Rotation: " + str(map_train) + "\t" + str(map_test) + "\n")

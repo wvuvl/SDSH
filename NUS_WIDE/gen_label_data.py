@@ -99,7 +99,7 @@ print("Count of items with more than one label: {0}".format(number_of_two_and_mo
 
 styles= {
     '2100.10500', # 100 per label out of 21 for test, 500 per label out of 21 for train, train and rest for db (db contains train)
-    '10000._', # 1000 per label out of 21 for test, rest for train and db (db equals to train)
+    '2100._', # 1000 per label out of 21 for test, rest for train and db (db equals to train)
     '5000.10000', # 5000 randomly sampled for test and 10000 randomly sampled for train, train and rest for db (db contains train)
 }
 
@@ -114,7 +114,7 @@ def generate(style):
     items_test = []
     items_database = []
 
-    if style == '10000._':
+    if style == '2100._':
         for label ,l in categorized.items():
             shuffle(l)
             num = 0
@@ -123,7 +123,7 @@ def generate(style):
                     test_data.add(l_it)
                     items_test.append(items[l_it])
                     num += 1
-                    if num == 1000:
+                    if num == 100:
                         break
     
         for i in range(len(content)):
@@ -148,7 +148,7 @@ def generate(style):
                     train_data.add(l_it)
                     items_train.append(items[l_it])
                     num += 1
-                    if num==500:
+                    if num == 500:
                         break
     
         for i in range(len(content)):

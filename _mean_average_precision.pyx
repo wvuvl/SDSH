@@ -20,7 +20,7 @@ cimport cython
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_t[:,::1] labels_test):
+cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_t[:,::1] labels_test, int top_n):
     """compute mean average precision (MAP)"""
 
     cdef np.float32_t map = <float>0.0
@@ -28,9 +28,12 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
     cdef np.intp_t Q = order.shape[0]
     cdef np.intp_t N = order.shape[1]
 
-    cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, N + 1, dtype=np.float32)
+    if top_n == 0:
+        top_n = N
 
-    cdef np.float32_t[::1] relevance = np.zeros(N, dtype=np.float32)
+    cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, top_n + 1, dtype=np.float32)
+
+    cdef np.float32_t[::1] relevance = np.zeros(top_n, dtype=np.float32)
     cdef np.ndarray[np.float32_t, ndim=1] precision
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
@@ -39,11 +42,11 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
     cdef int index
 
     for q in range(Q):
-        for i in range(N):
+        for i in range(top_n):
             index = order[q, i]
             relevance[i] = <float>1.0 if labels_test[q, 0] == labels_train[index, 0] else <float>0.0
         cumulative = np.cumsum(relevance)
-        number_of_relative_docs = cumulative[N-1]
+        number_of_relative_docs = cumulative[top_n-1]
         precision = cumulative / pos
         ap = np.dot(precision, relevance) / number_of_relative_docs
         map += ap
@@ -53,7 +56,7 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np.uint32_t[:,::1] labels_test):
+cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np.uint32_t[:,::1] labels_test, int top_n):
     """compute mean average precision (MAP)"""
 
     cdef np.float32_t map = <float>0.0
@@ -61,9 +64,12 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
     cdef np.intp_t Q = order.shape[0]
     cdef np.intp_t N = order.shape[1]
 
-    cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, N + 1, dtype=np.float32)
+    if top_n == 0:
+        top_n = N
 
-    cdef np.float32_t[::1] relevance = np.zeros(N, dtype=np.float32)
+    cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, top_n + 1, dtype=np.float32)
+
+    cdef np.float32_t[::1] relevance = np.zeros(top_n, dtype=np.float32)
     cdef np.ndarray[np.float32_t, ndim=1] precision
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
@@ -72,11 +78,11 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
     cdef int index
 
     for q in range(Q):
-        for i in range(N):
+        for i in range(top_n):
             index = order[q, i]
             relevance[i] = <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
         cumulative = np.cumsum(relevance)
-        number_of_relative_docs = cumulative[N-1]
+        number_of_relative_docs = cumulative[top_n-1]
         precision = cumulative / pos
         ap = np.dot(precision, relevance) / number_of_relative_docs
         map += ap
@@ -86,8 +92,8 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def calc_map(order, labels_train, labels_test, and_mode):
+def calc_map(order, labels_train, labels_test, top_n, and_mode):
     if and_mode:
-        return __calc_map_and(order.astype(np.int32), labels_train.astype(np.uint32), labels_test.astype(np.uint32))
+        return __calc_map_and(order.astype(np.int32), labels_train.astype(np.uint32), labels_test.astype(np.uint32), top_n)
     else:
-        return __calc_map(order.astype(np.int32), labels_train.astype(np.int8), labels_test.astype(np.int8))
+        return __calc_map(order.astype(np.int32), labels_train.astype(np.int8), labels_test.astype(np.int8), top_n)

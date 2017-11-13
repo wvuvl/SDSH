@@ -18,7 +18,7 @@ import pickle
 from mean_average_precision import compute_map
 from utils import cifar10_reader
 
-def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, and_mode=False, force_slow=False):
+def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n = 0, and_mode=False, force_slow=False):
     """Evaluate MAP. Hardcoded numbers for CIFAR10 case. 1000 images per category, i.e. in total 10000 images,
     are randomly sampled as quire images (selection happens at preparation step). The remaining images are used
     as database images.
@@ -35,10 +35,10 @@ def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, and_mo
         hashes_train[:-1000],
         hashes_train[-1000:],
         labels_train[:-1000],
-        labels_train[-1000:], and_mode=and_mode, force_slow=force_slow)
+        labels_train[-1000:], top_n=top_n, and_mode=and_mode, force_slow=force_slow)
     print("Test on train " + str(map_train))
 
-    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test, and_mode=and_mode, force_slow=force_slow)
+    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=force_slow)
     print("Test on test " + str(map_test))
     return map_train, map_test
 

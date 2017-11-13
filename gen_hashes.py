@@ -12,8 +12,9 @@ def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16):
     bp = batch_provider.BatchProvider(BATCH_SIZE, items, worker=1, cycled=False)
 	
     b = np.zeros([len(items), hash_size])
-    l = np.zeros([len(items), 1], dtype=np.int32)
-	
+
+    l = np.zeros([len(items), 1], dtype=np.uint32)
+
     batches = bp.get_batches()
 
     k = 0
