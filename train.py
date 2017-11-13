@@ -89,8 +89,10 @@ class Train:
 
         logger.addHandler(file_handler)
         logger.addHandler(self.console_handler)
+        
+        config = tf.ConfigProto(device_count = {'GPU': 1})
 
-        with tf.Graph().as_default(), tf.Session() as session:
+        with tf.Graph().as_default(), tf.Session(config=config) as session:
             logger.info("\n{0}\n{1}\n{0}\n".format("-" * 80, name))
             logger.info("\nSettings:\n{0}".format(pformat(vars(cfg))))
 
@@ -133,12 +135,14 @@ class Train:
                 with open('temp/items_test_nuswide_10000._.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
                 self.and_mode = True
-                items_train = items_train[:156700]
 
             if len(items_db) > 0:
                 l = (len(items_db) // 100) * 100
                 items_db = items_db[:l]
 
+            l = (len(items_train) // 100) * 100
+            items_db = items_train[:l]
+                
             num_examples_per_epoch_for_train = len(items_train)
 
             bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True)
