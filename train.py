@@ -127,10 +127,10 @@ class Train:
                 with open('temp/items_db_nuswide_5000.10000.pkl', 'rb') as pkl:
                     items_db = pickle.load(pkl)
                 self.and_mode = True
-            elif cfg.dataset == "nus10000._":
-                with open('temp/items_train_nuswide_10000._.pkl', 'rb') as pkl:
+            elif cfg.dataset == "nus2100._":
+                with open('temp/items_train_nuswide_2100._.pkl', 'rb') as pkl:
                     items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide_10000._.pkl', 'rb') as pkl:
+                with open('temp/items_test_nuswide_2100._.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
                 self.and_mode = True
                 items_train = items_train[:156700]
@@ -302,7 +302,7 @@ class Train:
 
     def Rotation(self, hash_size, directory):
         NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
-        NUM_EPOCHS_PER_DECAY = 50.0
+        NUM_EPOCHS_PER_DECAY = 20.0
         LEARNING_RATE_DECAY_FACTOR = 0.5
 
         CLAMP = 0.03
@@ -352,9 +352,9 @@ class Train:
 
 
             b_r = tf.matmul(input_hash, rot)
-            #b_r = tf.nn.l2_normalize(b_r, 1)
+            b_r = tf.nn.l2_normalize(b_r, 1)
 
-            batch_size = 1000
+            batch_size = 500
             positive_pairs = tf.cast(tf.equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
             negative_triples = tf.cast(tf.not_equal(tf.reshape(input_label, [batch_size, 1]), tf.reshape(input_label, [batch_size])), tf.float32)
 
@@ -423,12 +423,12 @@ class Train:
                               'sec/batch)')
                 print(format_str % (time.time(), i, examples_per_sec, sec_per_batch))
 
-            b_train = tf.constant(self.b_train, dtype=tf.float32)
-            b_full = tf.constant(self.b_db, dtype=tf.float32)
-            b_test_full = tf.constant(self.b_test, dtype=tf.float32)
-            b_dataset_r = session.run(tf.matmul(b_full, rot), {})
-            b_train_r = session.run(tf.matmul(b_train, rot), {})
-            b_test_r = session.run(tf.matmul(b_test_full, rot), {})
+            tf_b_train = tf.constant(self.b_train, dtype=tf.float32)
+            tf_b_db = tf.constant(self.b_db, dtype=tf.float32)
+            tf_b_test = tf.constant(self.b_test, dtype=tf.float32)
+            b_dataset_r = session.run(tf.matmul(tf_b_db, rot), {})
+            b_train_r = session.run(tf.matmul(tf_b_train, rot), {})
+            b_test_r = session.run(tf.matmul(tf_b_test, rot), {})
 
         self.logger.info("Finished learning rotation")
         self.logger.info("Starting evaluation")
