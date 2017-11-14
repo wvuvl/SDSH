@@ -5,8 +5,8 @@ if __name__ == '__main__':
     path = "experiments"
 
     train = Train()
-Settings:
 
+    experiments = [
         # CIFAR10
         {
             "loss": "loss_spring",
