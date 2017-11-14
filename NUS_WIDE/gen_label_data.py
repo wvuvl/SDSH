@@ -50,7 +50,7 @@ for (l, a) in labels:
 
 keptlabels = labels[-21:]
 
-labels = labels[-31:]
+#labels = labels[-21:]
 
 labels_ids = {}
 with open('labels.txt', 'w') as f:
