@@ -156,7 +156,6 @@ class Train:
             assert(len(items_train) % 100 == 0)
             assert(len(items_test) % 100 == 0)
 
-31
             num_examples_per_epoch_for_train = len(items_train)
 
             bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True)
