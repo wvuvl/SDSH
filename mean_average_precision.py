@@ -36,16 +36,18 @@ def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, a
         return _mean_average_precision.calc_map(order, labels_train, labels_test, top_n, and_mode)
     else:
         print("Warning. Using slow \"compute_map\"")
-        s = __compute_s(labels_train, labels_test)
+        s = __compute_s(labels_train, labels_test, and_mode)
         return __calc_map(order, np.transpose(s), top_n)
 
 
-def __compute_s(train_l, test_l):
+def __compute_s(train_l, test_l, and_mode):
     """Return similarity matrix between two label vectors
     The output is binary matrix of size n_train x n_test
     """
-    d = train_l - np.transpose(test_l)
-    return np.equal(d, 0)
+    if and_mode:
+        return np.bitwise_and(train_l, np.transpose(test_l)).astype(dtype=np.bool)
+    else:
+        return np.equal(train_l, np.transpose(test_l))
 
 
 def __calc_map(order, s, top_n):
@@ -59,8 +61,9 @@ def __calc_map(order, s, top_n):
         relevance = s[q, order[q, :top_n]].astype(np.float32)
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[-1:]
-        precision = cumulative / pos
-        ap = np.dot(precision, relevance) / number_of_relative_docs
-        map += ap
+        if number_of_relative_docs != 0:
+            precision = cumulative / pos
+            ap = np.dot(precision, relevance) / number_of_relative_docs
+            map += ap
     map /= Q
     return float(map)
