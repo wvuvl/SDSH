@@ -55,6 +55,7 @@ class Train:
                 self.total_epoch_count = 0
                 self.dataset = None
                 self.top_n = 0
+                self.freeze = False
 
         cfg = Cfg()
         self.cfg = cfg
@@ -191,7 +192,7 @@ class Train:
 
             opt = tf.train.GradientDescentOptimizer(lr)
 
-            pre_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
+            fcn_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
             train_step = opt.minimize(model.loss, global_step=global_step)
             _start_time = time.time()
             merged = tf.summary.merge_all()
@@ -219,29 +220,31 @@ class Train:
             for i in range(start_step, int(cfg.total_epoch_count * num_batches_per_epoch)):
                 feed_dict = next(batches)
 
-                #if i < 2000:
-                #    step = pre_train_step
-                #else:
-                #    step = train_step
-                step = train_step
+                if cfg.freeze and i < 500:
+                    step = fcn_train_step
+                else:
+                    step = train_step
 
                 labels = feed_dict["labels"]
 
-                labels = np.asarray(labels, np.uint32)
+                if self.and_mode:
+                    labels = np.asarray(labels, np.object)
+                else:
+                    labels = np.asarray(labels, np.uint32)
 
                 lr_mod = 1.0
 
                 if self.and_mode:
-                    mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))
-                else:
                     mask = np.bitwise_and(np.reshape(labels, [cfg.batch_size, 1]),
                                           np.reshape(labels, [1, cfg.batch_size])).astype(dtype=np.bool)
+                else:
+                    mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))
 
                 summary, _, _ = session.run(
                     [merged, model.assignment, step],
                     {
                         model.t_images: feed_dict["images"],
-                        model.t_labels: feed_dict["labels"],
+                        #model.t_labels: feed_dict["labels"],
                         model.t_boolmask: mask,
                         lr_modulator: lr_mod
                     })
@@ -286,29 +289,31 @@ class Train:
 
         self.logger.info("Start generating hashes")
 
+        longints = self.and_mode
+
         self.l_train, self.b_train = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_train, hash_size)
+                                       model.output, session, items_train, hash_size, longints=longints)
 
         self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_test, hash_size, 1)
+                                       model.output, session, items_test, hash_size, 1, longints=longints)
 
         if len(items_db) > 0:
             self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_db, hash_size)
+                                       model.output, session, items_db, hash_size, longints=longints)
         else:
             self.l_db, self.b_db = self.l_train, self.b_train
 
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode)
+        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
         self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
 
     def Rotation(self, hash_size, directory):
-        NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = len(self.b_train)
+        NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 10000
         NUM_EPOCHS_PER_DECAY = 10.0
         LEARNING_RATE_DECAY_FACTOR = 0.5
 
@@ -413,20 +418,24 @@ class Train:
             for i in range(int(TOTAL_EPOCHS_COUNT * num_batches_per_epoch)):
                 labels = self.l_train[k * batch_size:k * batch_size + batch_size]
                 if self.and_mode:
-                    mask = np.equal(np.reshape(labels, [batch_size, 1]), np.reshape(labels, [1, batch_size]))
-                else:
                     mask = np.bitwise_and(np.reshape(labels, [batch_size, 1]),
                                           np.reshape(labels, [1, batch_size])).astype(dtype=np.bool)
+                    #mask = np.zeros([batch_size, batch_size], dtype=np.bool)
+                    #for i in range(batch_size):
+                    #    for j in range(batch_size):
+                    #        mask[i, j] = (labels[i] & labels[j]) != 0
+                else:
+                    mask = np.equal(np.reshape(labels, [batch_size, 1]), np.reshape(labels, [1, batch_size]))
 
                 summary, _ = session.run([merged, train_step],
                                          {
                                              input_hash:  self.b_train[k * batch_size:k * batch_size + batch_size],
-                                             input_label:  self.l_train[k * batch_size:k * batch_size + batch_size],
+                                             #input_label:  self.l_train[k * batch_size:k * batch_size + batch_size],
                                              t_boolmask: mask,
                                          })
                 writer.add_summary(summary, i)
 
-                k +=1
+                k += 1
                 if (k+1) * batch_size >= len(self.b_train):
                     k = 0
 
@@ -451,7 +460,7 @@ class Train:
         self.logger.info("Finished learning rotation")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_dataset_r, top_n=self.top_n)
+        map_train, map_test = evaluate(self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_dataset_r, top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write("Rotation: " + str(map_train) + "\t" + str(map_test) + "\n")
