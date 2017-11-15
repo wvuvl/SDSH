@@ -14,10 +14,10 @@ if __name__ == '__main__':
             "hash_size": 24,
             "margin": 2.0,
             "batch_size": 150,
-            "total_epoch_count": 30,
+            "total_epoch_count": 28,
             "number_of_epochs_per_decay": 30,
             "weight_decay_factor": 5e-05,
-            "learning_rate": 0.05,
+            "learning_rate": 0.07,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -26,10 +26,10 @@ if __name__ == '__main__':
             "hash_size": 16,
             "margin": 2.0,
             "batch_size": 150,
-            "total_epoch_count": 30,
+            "total_epoch_count": 28,
             "number_of_epochs_per_decay": 30,
             "weight_decay_factor": 5e-05,
-            "learning_rate": 0.05,
+            "learning_rate": 0.07,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -38,10 +38,10 @@ if __name__ == '__main__':
             "hash_size": 32,
             "margin": 2.0,
             "batch_size": 150,
-            "total_epoch_count": 30,
+            "total_epoch_count": 28,
             "number_of_epochs_per_decay": 30,
             "weight_decay_factor": 5e-05,
-            "learning_rate": 0.05,
+            "learning_rate": 0.07,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
@@ -50,10 +50,10 @@ if __name__ == '__main__':
             "hash_size": 48,
             "margin": 2.0,
             "batch_size": 150,
-            "total_epoch_count": 30,
+            "total_epoch_count": 28,
             "number_of_epochs_per_decay": 30,
             "weight_decay_factor": 5e-05,
-            "learning_rate": 0.05,
+            "learning_rate": 0.07,
             "learning_rate_decay_factor": 2.0 / 3.0
         },
     ]
