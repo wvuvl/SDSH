@@ -25,4 +25,4 @@ download(directory=data_path, google_drive_fileid="0B3kP5zWXwFm_OUpQbDFqY2dXNGs"
 nus_wide = os.path.join(data_path, "nus_wide")
 download(directory=nus_wide, google_drive_fileid="1yf6KqG8aQAdqAAl1I-stoGpecyct-NZD", extract_zip=True)
 imagenet = os.path.join(data_path, "imagenet")
-download(directory=imagenet, google_drive_fileid="1wWJKb-jl0GjkeA79ciczA9jXCkkRfeNE", extract_zip=True)
+download(directory=imagenet, google_drive_fileid="1dnUCeX87e7BvIed2dg3XEpzTPlYX6JPi", extract_zip=True)
