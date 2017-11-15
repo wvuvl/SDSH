@@ -143,6 +143,15 @@ class Train:
                     items_test = pickle.load(pkl)
                 self.and_mode = True
                 self.top_n = 50000
+            elif cfg.dataset == "imagenet":
+                with open('data/imagenet/items_train_imagenet.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('data/imagenet/items_test_imagenet.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
+                with open('data/imagenet/items_db_imagenet.pkl', 'rb') as pkl:
+                    items_db = pickle.load(pkl)
+                self.and_mode = False
+                self.top_n = 5000
 
             if len(items_db) > 0:
                 l = (len(items_db) // 100) * 100
@@ -160,7 +169,7 @@ class Train:
 
             num_examples_per_epoch_for_train = len(items_train)
 
-            bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True)
+            bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True, imagenet=cfg.dataset == "imagenet")
 
             num_batches_per_epoch = num_examples_per_epoch_for_train / cfg.batch_size
             decay_steps = int(num_batches_per_epoch * cfg.number_of_epochs_per_decay)
@@ -184,8 +193,6 @@ class Train:
                                             decay_steps,
                                             cfg.learning_rate_decay_factor,
                                             staircase=True)
-
-            lr *= lr_modulator
 
             tf.summary.scalar('learning_rate', lr)
 
@@ -234,8 +241,6 @@ class Train:
                 else:
                     labels = np.asarray(labels, np.uint32)
 
-                lr_mod = 1.0
-
                 if self.and_mode:
                     mask = np.bitwise_and(np.reshape(labels, [cfg.batch_size, 1]),
                                           np.reshape(labels, [1, cfg.batch_size])).astype(dtype=np.bool)
@@ -248,7 +253,6 @@ class Train:
                         model.t_images: feed_dict["images"],
                         #model.t_labels: feed_dict["labels"],
                         model.t_boolmask: mask,
-                        lr_modulator: lr_mod
                     })
 
                 writer.add_summary(summary, i)
@@ -294,14 +298,14 @@ class Train:
         longints = self.and_mode
 
         self.l_train, self.b_train = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_train, hash_size, longints=longints)
+                                       model.output, session, items_train, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet")
 
         self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_test, hash_size, 1, longints=longints)
+                                       model.output, session, items_test, hash_size, 1, longints=longints, imagenet=self.cfg.dataset == "imagenet")
 
         if len(items_db) > 0:
             self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_db, hash_size, longints=longints)
+                                       model.output, session, items_db, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet")
         else:
             self.l_db, self.b_db = self.l_train, self.b_train
 

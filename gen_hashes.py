@@ -8,8 +8,8 @@ import tensorflow as tf
 BATCH_SIZE = 100 # must be a divider of 10000 and 50000
 
 
-def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, longints=False):
-    bp = batch_provider.BatchProvider(BATCH_SIZE, items, worker=1, cycled=False)
+def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, longints=False, imagenet=False):
+    bp = batch_provider.BatchProvider(BATCH_SIZE, items, worker=1, cycled=False, imagenet=imagenet)
 	
     b = np.zeros([len(items), hash_size])
 

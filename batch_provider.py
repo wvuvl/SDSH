@@ -33,7 +33,7 @@ except ImportError:
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
-    def __init__(self, batch_size, items, cycled=True, worker=16, width=224, height=224):
+    def __init__(self, batch_size, items, cycled=True, worker=16, imagenet=False, width=224, height=224):
         self.items = items
         shuffle(self.items)
         self.batch_size = batch_size
@@ -53,7 +53,7 @@ class BatchProvider:
         self.jpeg = type(items[0][1]) is str
 
         if self.jpeg:
-            self.env = lmdb.open('nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
+            self.env = lmdb.open('data/imagenet/imagenet' if imagenet else 'nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
 
     def get_batches(self):
         workers = []
@@ -124,7 +124,7 @@ class BatchProvider:
                     buffer.seek(0)
                     buffer.write(buf)
                     buffer.seek(0) 
-                    image = misc.imread(buffer)
+                    image = misc.imread(buffer, mode='RGB')
                     #misc.imsave(str(i) + "_" + str(item[0])+ "test.jpg", image)
             # Data augmentation. Should be removed from here
             # if random.random() > 0.5:
