@@ -24,3 +24,5 @@ download(directory=data_path, google_drive_fileid="0B3kP5zWXwFm_OUpQbDFqY2dXNGs"
 #download(directory=data_path, url="http://www.vlfeat.org/matconvnet/models/imagenet-vgg-f.mat")
 nus_wide = os.path.join(data_path, "nus_wide")
 download(directory=nus_wide, google_drive_fileid="1yf6KqG8aQAdqAAl1I-stoGpecyct-NZD", extract_zip=True)
+imagenet = os.path.join(data_path, "imagenet")
+download(directory=imagenet, google_drive_fileid="1NwcXyI-Bqoty_T9mWfpEuyPJImXjo6pT", extract_zip=True)
