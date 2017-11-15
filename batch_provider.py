@@ -50,7 +50,10 @@ class BatchProvider:
         self.batches_n = len(self.items)//self.batch_size
         logging.debug("Batches per epoch: {0}", self.batches_n)
 
-        self.jpeg = type(items[0][1]) is str or type(items[0][1]) is unicode
+        try:
+            self.jpeg = type(items[0][1]) is str or type(items[0][1]) is unicode
+        except:
+            self.jpeg = type(items[0][1]) is str
 
         if self.jpeg:
             self.env = lmdb.open('data/imagenet/imagenet' if imagenet else 'nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
