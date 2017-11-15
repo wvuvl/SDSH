@@ -142,6 +142,7 @@ class Train:
                 with open('temp/items_test_nuswide_2100._.pkl', 'rb') as pkl:
                     items_test = pickle.load(pkl)
                 self.and_mode = True
+                self.top_n = 50000
 
             if len(items_db) > 0:
                 l = (len(items_db) // 100) * 100
