@@ -48,8 +48,9 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
         precision = cumulative / pos
-        ap = np.dot(precision, relevance) / number_of_relative_docs
-        map += ap
+        if number_of_relative_docs != 0:
+            ap = np.dot(precision, relevance) / number_of_relative_docs
+            map += ap
     map /= Q
     return map
 
