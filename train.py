@@ -320,16 +320,21 @@ class Train:
 
     def Rotation(self, hash_size, directory):
         labels = self.l_train
+        H = self.b_train
 
         size = labels.shape[0]
+
+        if size > 40000:
+            idx = np.random.randint(size, size=40000)
+            size = 40000
+            labels = labels[idx,:]
+            H = H[idx,:]
 
         if self.and_mode:
             S = np.bitwise_and(np.reshape(labels, [size, 1]),
                                   np.reshape(labels, [1, size])).astype(dtype=np.bool)
         else:
             S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
-
-        H = self.b_train
 
         nu = 0.3
 
