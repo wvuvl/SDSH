@@ -35,6 +35,7 @@ def __get_triplets(batch_size, ids, boolean_mask):
 def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_mask = None):
     """Loss from the paper\"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\""""
     with tf.name_scope('loss') as scope:
+        tf.summary.histogram("embedding", embedding)
         bibj = tf.matmul(embedding, embedding, transpose_b=True)
         distance = bibj / 2.0 #Qij
         negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
@@ -54,7 +55,7 @@ def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_m
         # 2 * eta * N / T / N = 2 * 100 / 22500 = 0.00888
 
         triplets = __get_triplets(batch_size, ids, boolean_mask)
-        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) + 0.00888 * binarization_regularizer
+        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) + 1.50888 * binarization_regularizer
         return loss
 
 

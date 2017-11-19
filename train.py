@@ -16,6 +16,7 @@ import loss_functions
 from evaluate_performance import evaluate
 from gen_hashes import gen_hashes
 
+import matplotlib.pyplot as plt
 
 class Train:
     def __init__(self):
@@ -178,6 +179,7 @@ class Train:
 
             loss = loss_functions.losses[cfg.loss]
             model = constructor.net(cfg.batch_size, cfg.hash_size, cfg.margin, cfg.weight_decay_factor, loss)
+            self.model = model
 
             tf.summary.scalar('weigh_decay', model.weight_decay)
             tf.summary.scalar('total_loss_plus_weigh_decay', model.loss)
@@ -226,6 +228,8 @@ class Train:
 
             batches = bp.get_batches()
 
+            outdata = np.empty(shape=(0))
+
             for i in range(start_step, int(cfg.total_epoch_count * num_batches_per_epoch)):
                 feed_dict = next(batches)
 
@@ -247,13 +251,15 @@ class Train:
                 else:
                     mask = np.equal(np.reshape(labels, [cfg.batch_size, 1]), np.reshape(labels, [1, cfg.batch_size]))
 
-                summary, _, _ = session.run(
-                    [merged, model.assignment, step],
+                summary, _, _, out = session.run(
+                    [merged, model.assignment, step, model.output],
                     {
                         model.t_images: feed_dict["images"],
                         #model.t_labels: feed_dict["labels"],
                         model.t_boolmask: mask,
                     })
+
+                outdata = np.concatenate((outdata, out.flatten()))
 
                 writer.add_summary(summary, i)
 
@@ -269,9 +275,17 @@ class Train:
 
                 logger.debug(format_str % (i, examples_per_sec, sec_per_batch))
 
-                if (i % 2000 == 0) and i != 0:
+                if (i % 10000 == 0) and i != 0:
                     self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                                directory, embedding_conf, saver, global_step, feed_dict)
+
+                    outdata = np.asarray(outdata)
+                    rng = np.random.RandomState(10)  # deterministic random data
+                    h = np.histogram(outdata, bins=[(x / 40.0 - 0.5) * 6.0 for x in range(40)])
+
+                    print(h)
+
+                    outdata = []
 
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
@@ -312,7 +326,7 @@ class Train:
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
+        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode, force_slow=True)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(str(map_train) + "\t" + str(map_test) + "\n")
