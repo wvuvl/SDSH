@@ -6,3 +6,6 @@
 __pycache__/
 temp/
 data/
+experiments*/
+nuswide/
+images/
