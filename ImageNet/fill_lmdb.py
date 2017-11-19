@@ -4,6 +4,7 @@ import numpy as np
 from scipy import misc
 import matplotlib.pyplot as plt
 from PIL import Image
+import sys
 try:
 	from BytesIO import BytesIO
 except ImportError:
@@ -47,9 +48,10 @@ def saveAllToDB(env):
 		for root, dirs, files in os.walk(os.path.join(path)):
 			root_ = os.path.basename(root)
 			for f in files:
-				if f[-5:] == ".JPEG":
+				key = f
+				buf = txn.get(key.encode('ascii'))
+				if f[-5:] == ".JPEG" and buf is None:
 					try:
-						key = f
 						print(key)
 						im = run(os.path.join(root, f))
 						buffer = BytesIO()
@@ -59,6 +61,10 @@ def saveAllToDB(env):
 						txn.put(key.encode('ascii'), buffer.read())
 						k += 1
 					except:
+						the_type, the_value, the_traceback = sys.exc_info()
+						print(the_value)
+						print(the_traceback)
+
 						print("FAILED")
 	return k
 

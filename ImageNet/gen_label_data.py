@@ -3,6 +3,8 @@ import numpy as np
 from random import shuffle
 import random
 import pickle
+import matplotlib.pyplot as plt
+from scipy import misc
 
 images = []
 
@@ -33,7 +35,6 @@ val_labels = [int(x.strip()) for x in val]
 
 
 print(len(content))
-labels = {}
 
 test_data = set()
 train_data = set()
@@ -46,31 +47,33 @@ valid_labels = []
 
 filenames = {}
 ifilenames = {}
+labels = {}
 
 for id, label, filename in content:
     print(label)
     filenames[id] = filename
+    labels[id] = label
     ifilenames[filename] = id
     valid_labels.append(id)
 
 for i in range(len(validation_images)):
     v = val_labels[i]
     f = validation_images[i]
-    if v in valid_labels:
-        items_test.append((v, f))
-
+    #if v in valid_labels:
+    #    #items_test.append((v, f))
 
 categorized = {val: [] for (key, val) in filenames.items()}
 
 for im in images:
     f = im[:9]
     l = ifilenames[f]
-    items_database.append((l, im))
     categorized[f].append((l, im))
 
 for (f, c) in categorized.items():
     shuffle(c)
     items_train += c[:100]
+    items_test += c[100:150]
+    items_database += c[150:]
 
 print("Count of test items: {0}".format(len(items_test)))
 print("Count of train items: {0}".format(len(items_train)))
@@ -79,6 +82,13 @@ print("Count of database items: {0}".format(len(items_database)))
 shuffle(items_train)
 shuffle(items_test)
 shuffle(items_database)
+
+#
+# for (l, f) in items_train:
+#     im = misc.imread("../data/imagenet/" + f)
+#     print(labels[l])
+#     plt.imshow(im, interpolation='nearest')
+#     plt.show()
 
 if not os.path.exists('../temp'):
     os.makedirs('../temp')
