@@ -31,37 +31,16 @@ def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n 
     hashes_train = hashes_train.astype(np.float32)
     hashes_test = hashes_test.astype(np.float32)
 
+    map_train = 0.0
+
     if testOnTrain:
-        map_train = compute_map(
+        map_train, _ = compute_map(
            hashes_train[:-1000],
            hashes_train[-1000:],
            labels_train[:-1000],
            labels_train[-1000:], top_n=top_n, and_mode=and_mode, force_slow=force_slow)
         print("Test on train " + str(map_train))
 
-    map_test = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=True)
+    map_test, curve = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=True)
     print("Test on test " + str(map_test))
-    if testOnTrain:
-        return map_train, map_test
-    else:
-        return 0.0, map_test
-
-
-def evaluate_offline():
-    """Read pickled test, train sets and pickled hashes and perform evaluation"""
-    with open('temp/items_train.pkl', 'rb') as pkl:
-        items_train = pickle.load(pkl)
-    with open('temp/items_test.pkl', 'rb') as pkl:
-        items_test = pickle.load(pkl)
-    with open('temp/b_database.pkl', 'rb') as pkl:
-        b_database = pickle.load(pkl)
-    with open('temp/b_test.pkl', 'rb') as pkl:
-        b_test = pickle.load(pkl)
-
-    test, train = evaluate(items_train, items_test, b_database, b_test)
-    test2, train2 = evaluate(items_train, items_test, b_database, b_test, True)
-
-    print("Passed!" if (test == test2) and(train == train2) else "Failed!")
-
-if __name__ == '__main__':
-    evaluate_offline()
+    return map_train, map_test, curve

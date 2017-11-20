@@ -276,7 +276,6 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-
         self.Rotation(cfg.hash_size, directory)
 
         with open(os.path.join(directory, "Done.txt"), "a") as file:
@@ -312,11 +311,18 @@ class Train:
         self.logger.info("Finished generating hashes")
         self.logger.info("Starting evaluation")
 
-        map_train, map_test = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
+        map_train, map_test, curve = evaluate(self.l_train, self.b_train, self.l_test, self.b_test, self.l_db, self.b_db, top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
+
+        print(curve)
+        output = open(os.path.join(directory, "pr_curve.pkl"), 'wb')
+        pickle.dump(curve, output)
+        output.close()
+
+        report_string = "Test on train: {0}, Test on test: {1}".format(map_train, map_test)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
-            file.write(str(map_train) + "\t" + str(map_test) + "\n")
-        self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
+            file.write(report_string + "\n")
+        self.logger.info(report_string)
 
     def Rotation(self, hash_size, directory):
         labels = self.l_train

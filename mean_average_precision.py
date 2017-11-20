@@ -76,7 +76,7 @@ def __calc_map(order, s, top_n):
 
     curve = np.zeros([top_n, 2])
 
-    curve[:, 0] av_precision
-    curve[:, 1] av_recall
+    curve[:, 0] = av_precision
+    curve[:, 1] = av_recall
 
     return float(map), curve
