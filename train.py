@@ -276,7 +276,7 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-        self.Rotation(cfg.hash_size, directory)
+        self.Rotation(cfg.hash_size, directory,eta=.3)
 
         with open(os.path.join(directory, "Done.txt"), "a") as file:
             file.write("\n")
@@ -324,10 +324,18 @@ class Train:
             file.write(report_string + "\n")
         self.logger.info(report_string)
 
-    def Rotation(self, hash_size, directory):
+    def Rotation(self, hash_size, directory,eta):
+        nu = eta
         labels = self.l_train
+        H = self.b_train
 
         size = labels.shape[0]
+
+        if size > 40000:
+            idx = np.random.randint(size, size=40000)
+            size = 40000
+            labels = labels[idx,:]
+            H = H[idx,:]
 
         if self.and_mode:
             S = np.bitwise_and(np.reshape(labels, [size, 1]),
@@ -335,9 +343,7 @@ class Train:
         else:
             S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
 
-        H = self.b_train
 
-        nu = 0.3
 
         M = np.matmul(np.matmul(H.T, S), H) + nu * np.matmul(H.T, H)
 
@@ -353,8 +359,8 @@ class Train:
                                        top_n=self.top_n, and_mode=self.and_mode, force_slow=self.and_mode)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
-            file.write("Closed: " + str(nu) + " Rotation: " + str(map_train) + "\t" + str(map_test) + "\n")
-        self.logger.info("Test on train: {0}, Test on test: {1}".format(map_train, map_test))
+            file.write("Closed: " + str(nu) + " Rotation: " + str(map_train) + " Eta: " + str(eta) + "\t" + str(map_test) + "\n")
+        self.logger.info("Test on train: {0}, Test on test: {1}, Eta: {2}".format(map_train, map_test,eta))
 
         return
         # NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 10000
