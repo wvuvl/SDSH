@@ -33,8 +33,12 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
 
     cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, top_n + 1, dtype=np.float32)
 
+    cdef np.ndarray[np.float32_t, ndim=1] av_precision = np.zeros(top_n, dtype=np.float32)
+    cdef np.ndarray[np.float32_t, ndim=1] av_recall = np.zeros(top_n, dtype=np.float32)
+
     cdef np.float32_t[::1] relevance = np.zeros(top_n, dtype=np.float32)
     cdef np.ndarray[np.float32_t, ndim=1] precision
+    cdef np.ndarray[np.float32_t, ndim=1] recall
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
     cdef np.float32_t number_of_relative_docs
@@ -47,12 +51,22 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
             relevance[i] = <float>1.0 if labels_test[q, 0] == labels_train[index, 0] else <float>0.0
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
-        precision = cumulative / pos
         if number_of_relative_docs != 0:
+            precision = cumulative / pos
+            recall = cumulative / number_of_relative_docs
+            av_precision += precision
+            av_recall += recall
             ap = np.dot(precision, relevance) / number_of_relative_docs
             map += ap
     map /= Q
-    return map
+    av_precision /= Q
+    av_recall /= Q
+
+    cdef np.ndarray[np.float32_t, ndim=2] curve = np.zeros([top_n, 2], dtype=np.float32)
+    curve[:, 0] = av_precision
+    curve[:, 1] = av_recall
+
+    return map, curve
 
 
 @cython.boundscheck(False)
@@ -70,8 +84,12 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
 
     cdef np.ndarray[np.float32_t, ndim=1] pos = np.arange(1, top_n + 1, dtype=np.float32)
 
+    cdef np.ndarray[np.float32_t, ndim=1] av_precision = np.zeros(top_n, dtype=np.float32)
+    cdef np.ndarray[np.float32_t, ndim=1] av_recall = np.zeros(top_n, dtype=np.float32)
+
     cdef np.float32_t[::1] relevance = np.zeros(top_n, dtype=np.float32)
     cdef np.ndarray[np.float32_t, ndim=1] precision
+    cdef np.ndarray[np.float32_t, ndim=1] recall
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
     cdef np.float32_t number_of_relative_docs
@@ -84,12 +102,22 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
             relevance[i] = <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
-        precision = cumulative / pos
         if number_of_relative_docs != 0:
+            precision = cumulative / pos
+            recall = cumulative / number_of_relative_docs
+            av_precision += precision
+            av_recall += recall
             ap = np.dot(precision, relevance) / number_of_relative_docs
             map += ap
     map /= Q
-    return map
+    av_precision /= Q
+    av_recall /= Q
+
+    cdef np.ndarray[np.float32_t, ndim=2] curve = np.zeros([top_n, 2], dtype=np.float32)
+    curve[:, 0] = av_precision
+    curve[:, 1] = av_recall
+
+    return map, curve
 
 
 @cython.boundscheck(False)
