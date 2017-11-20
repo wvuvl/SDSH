@@ -57,8 +57,7 @@ class BatchProvider:
 
         if self.jpeg:
             self.env = lmdb.open('data/imagenet/imagenet' if imagenet else 'nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
-            
-        print(self.jpeg)
+
 
     def get_batches(self):
         workers = []

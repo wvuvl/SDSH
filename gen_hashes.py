@@ -10,7 +10,7 @@ BATCH_SIZE = 100 # must be a divider of 10000 and 50000
 
 def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, longints=False, imagenet=False):
     bp = batch_provider.BatchProvider(BATCH_SIZE, items, worker=1, cycled=False, imagenet=imagenet)
-	
+
     b = np.zeros([len(items), hash_size])
 
     if longints:
@@ -34,8 +34,6 @@ def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, l
 
         k += BATCH_SIZE
 
-    print(len(b))
-    print(k)
     assert(len(b) == k)
     assert(len(l) == k)
 

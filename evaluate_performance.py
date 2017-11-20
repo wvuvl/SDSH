@@ -39,8 +39,8 @@ def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n 
            hashes_train[-1000:],
            labels_train[:-1000],
            labels_train[-1000:], top_n=top_n, and_mode=and_mode, force_slow=force_slow)
-        print("Test on train " + str(map_train))
+        #print("Test on train " + str(map_train))
 
-    map_test, curve = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=True)
-    print("Test on test " + str(map_test))
+    map_test, curve = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=and_mode)
+    #print("Test on test " + str(map_test))
     return map_train, map_test, curve
