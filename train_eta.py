@@ -286,9 +286,8 @@ class Train:
         AccBase = [self.FAcc]
         t = np.arange(0, 1.05, .05)
         for eta in t:
-            ac=self.Rotation(cfg.hash_size, directory,eta)
+            ac=self.Rotation(directory, eta)
             Acc.append(ac)
-
 
         plt.plot(t, Acc)
 
@@ -305,6 +304,11 @@ class Train:
             cfg.dataset = "cifar_full"
         
         path = "./fig/test_" + str(cfg.hash_size) +"_loss_" +cfg.loss + "_dataset_"+self.cfg.dataset
+        
+        C=AccBase+Acc
+        output_eta = open(os.path.join(directory, path + "_eta_fig.pkl"), 'wb')
+        pickle.dump(C, output_eta)
+        output.close()
         
         plt.savefig(path + ".png")
         plt.savefig(path + ".eps")
