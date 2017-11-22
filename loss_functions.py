@@ -175,9 +175,9 @@ def loss_simplespring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, 
         epsilon = 1e-3
         d = tf.sqrt(distance + epsilon) - math.sqrt(epsilon)
 
-        E = negative_pairs * tf.square(2.0 - d)
+        E = negative_pairs * tf.square(2.0 - d) + (1.0 - negative_pairs) * distance
 
-        loss = tf.reduce_sum(E) / tf.reduce_sum(negative_pairs)
+        loss = tf.reduce_mean(E)
         return loss
 
 """
