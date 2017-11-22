@@ -303,9 +303,9 @@ class Train:
         plt.yticks(fontsize=10)
         if not cfg.dataset:
             cfg.dataset = "cifar_full"
-		
-		path = "./fig/test_" + str(cfg.hash_size) +"_loss_" +cfg.loss + "_dataset_"+self.cfg.dataset
-		
+        
+        path = "./fig/test_" + str(cfg.hash_size) +"_loss_" +cfg.loss + "_dataset_"+self.cfg.dataset
+        
         plt.savefig(path + ".png")
         plt.savefig(path + ".eps")
         plt.savefig(path + ".pdf")
@@ -410,4 +410,4 @@ class Train:
         pickle.dump(curve, output)
         output.close()
 
-		return map_train, map_test
+        return map_train, map_test
