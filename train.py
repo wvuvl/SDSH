@@ -152,6 +152,11 @@ class Train:
                     items_db = pickle.load(pkl)
                 self.and_mode = False
                 self.top_n = 5000
+            elif cfg.dataset == "mnist":
+                with open('temp/mnist_train.pkl', 'rb') as pkl:
+                    items_train = pickle.load(pkl)
+                with open('temp/mnist_test.pkl', 'rb') as pkl:
+                    items_test = pickle.load(pkl)
 
             if len(items_db) > 0:
                 l = (len(items_db) // 100) * 100
