@@ -16,7 +16,7 @@
 
 import numpy as np
 import tensorflow as tf
-
+import math
 
 def __get_triplets(batch_size, ids, boolean_mask):
     """Return boolean 3D Tensor of valid pairs mask"""
@@ -172,8 +172,8 @@ def loss_simplespring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, 
         E = triplets * (Kp*tf.square(twol+alpha-d)/(twol+alpha)**2 + C)
 
         """
-        epsilon = 1e-8
-        d = tf.sqrt(4.0 - distance + epsilon)
+        epsilon = 1e-3
+        d = tf.sqrt(distance + epsilon) - math.sqrt(epsilon)
 
         E = negative_pairs * tf.square(2.0 - d)
 
