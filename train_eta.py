@@ -306,9 +306,9 @@ class Train:
         path = "./fig/test_" + str(cfg.hash_size) +"_loss_" +cfg.loss + "_dataset_"+self.cfg.dataset
         
         C=AccBase+Acc
-        output_eta = open(os.path.join(directory, path + "_eta_fig.pkl"), 'wb')
+        output_eta = open(path + "_eta_fig.pkl", 'wb')
         pickle.dump(C, output_eta)
-        output.close()
+        output_eta.close()
         
         plt.savefig(path + ".png")
         plt.savefig(path + ".eps")
@@ -385,8 +385,8 @@ class Train:
         b_db_r = np.matmul(self.b_db, R)
         self.logger.info("Finished rotations")
 
-        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, eta)
-        return
+        map_train, map_test = self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, eta)
+        return map_test
 
     def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, eta=None):
         self.logger.info("Starting evaluation")
