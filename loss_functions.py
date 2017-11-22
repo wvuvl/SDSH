@@ -144,6 +144,42 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolea
         loss = tf.reduce_sum(E) / tf.reduce_sum(triplets)
         return loss
 
+def loss_simplespring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
+    """"Energy based spring loss"""
+    embedding_norm = tf.nn.l2_normalize(embedding, 1)
+    with tf.name_scope('loss') as scope:
+        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
+
+        # squared euclidian distance
+        # ||bi - bj|| = (bi - bj)^2 = bi^2 - 2 * bj^2 = 2 - 2 * bi * bj
+        # bi^2 == 1 and because bi are normalized
+        distance = 2.0 - 2.0 * bibj
+        negative_pairs = tf.cast(tf.logical_not(boolean_mask), tf.float32)
+
+        # strain
+        # max_distance - distance. max_distance == 2
+        """
+        epsilon = 1e-6
+        d = tf.sqrt(4.0 - dqmp + epsilon)
+        twol = 8**0.5
+        K = 6
+        alpha = margin
+        Kp = K / (1.0-alpha**2/(twol+alpha)**2)
+        C = K-Kp
+        print("Kp = " + str(Kp))
+        print("C = " + str(C))
+
+        E = triplets * (Kp*tf.square(twol+alpha-d)/(twol+alpha)**2 + C)
+
+        """
+        epsilon = 1e-8
+        d = tf.sqrt(4.0 - distance + epsilon)
+
+        E = negative_pairs * tf.square(2.0 - d)
+
+        loss = tf.reduce_sum(E) / tf.reduce_sum(negative_pairs)
+        return loss
+
 """
 def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
@@ -196,4 +232,5 @@ losses = {
     "loss_accv_mod" : loss_accv_mod,
     "loss_triplet" : loss_triplet,
     "loss_spring" : loss_spring,
+    "loss_simplespring" : loss_simplespring,
 }
