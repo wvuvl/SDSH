@@ -15,8 +15,8 @@ args = parser.parse_args()
 names_list = []
 for ind in range(0,len(args.infiles),2):
     our_data = np.array(pickle.load(open(args.infiles[ind],'rb')))
-    our_r = our_data[:,1]
-    our_p = our_data[:,0]
+    our_r = our_data[0:5000,1]
+    our_p = our_data[0:5000,0]
     names_list.append(args.infiles[ind+1])
     plt.plot(our_r,our_p)
 
