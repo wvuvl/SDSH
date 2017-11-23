@@ -60,12 +60,13 @@ def __calc_map(order, s, top_n):
     av_precision = np.zeros(top_n)
     av_recall = np.zeros(top_n)
     for q in range(Q):
+    	total_number_of_relevant_documents = np.sum(s[q].astype(np.float32))
         relevance = s[q, order[q, :top_n]].astype(np.float32)
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[-1:]
         if number_of_relative_docs != 0:
             precision = cumulative / pos
-            recall = cumulative / number_of_relative_docs
+            recall = cumulative / total_number_of_relevant_documents
             av_precision += precision
             av_recall += recall
             ap = np.dot(precision, relevance) / number_of_relative_docs
@@ -80,3 +81,4 @@ def __calc_map(order, s, top_n):
     curve[:, 1] = av_recall
 
     return float(map), curve
+
