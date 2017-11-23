@@ -16,6 +16,7 @@ import loss_functions
 from evaluate_performance import evaluate
 from gen_hashes import gen_hashes
 
+import matplotlib.pyplot as plt
 
 class Train:
     def __init__(self):
@@ -280,7 +281,44 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-        self.Rotation(directory, eta=.3)
+
+        Acc=[]
+        AccBase = [self.FAcc]
+        t = np.arange(0, 1.05, .05)
+        for eta in t:
+            ac=self.Rotation(directory, eta)
+            Acc.append(ac)
+
+        plt.plot(t, Acc)
+
+        plt.xlabel(r"$\eta$", fontsize=10)
+        plt.ylabel('mAP', fontsize=10)
+
+        plt.grid(True)
+        plt.plot(t, len(t) * AccBase, label="Baseline")
+
+        plt.legend(loc=4, fontsize=15)
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+        if not cfg.dataset:
+            cfg.dataset = "cifar_full"
+        
+        path = "./fig/test_" + str(cfg.hash_size) +"_loss_" +cfg.loss + "_dataset_"+self.cfg.dataset
+        
+        C=AccBase+Acc
+        output_eta = open(path + "_eta_fig.pkl", 'wb')
+        pickle.dump(C, output_eta)
+        output_eta.close()
+        
+        plt.savefig(path + ".png")
+        plt.savefig(path + ".eps")
+        plt.savefig(path + ".pdf")
+        # # plt.show()
+
+        plt.clf()
+        plt.cla()
+        plt.close()
+
 
         with open(os.path.join(directory, "Done.txt"), "a") as file:
             file.write("\n")
@@ -347,8 +385,8 @@ class Train:
         b_db_r = np.matmul(self.b_db, R)
         self.logger.info("Finished rotations")
 
-        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, eta)
-        return
+        map_train, map_test = self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, eta)
+        return map_test
 
     def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, eta=None):
         self.logger.info("Starting evaluation")
