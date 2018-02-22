@@ -60,7 +60,7 @@ def __calc_map(order, s, top_n):
     av_precision = np.zeros(top_n)
     av_recall = np.zeros(top_n)
     for q in range(Q):
-    	total_number_of_relevant_documents = np.sum(s[q].astype(np.float32))
+        total_number_of_relevant_documents = np.sum(s[q].astype(np.float32))
         relevance = s[q, order[q, :top_n]].astype(np.float32)
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[-1:]

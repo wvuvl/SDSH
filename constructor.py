@@ -73,13 +73,13 @@ def net(batch_size, hash_size, margin=0, weight_decay_factor=0, loss_func=None):
     model.output = model.net['fc8_custom'] = fc8
     weight_decay = tf.add_n(model.weight_decay_losses)
 
-    embedding_norm = tf.nn.l2_normalize(model.output, 1)
+    model.output_norm = tf.nn.l2_normalize(model.output, 1)
 
     model.embedding_var = tf.Variable(tf.zeros((batch_size, hash_size), dtype=tf.float32),
                                       trainable=False,
                                       name='embedding',
                                       dtype='float32')
-    model.assignment = tf.assign(model.embedding_var, embedding_norm)
+    model.assignment = tf.assign(model.embedding_var, model.output_norm)
 
     if loss_func is not None:
         model.weight_decay = weight_decay * weight_decay_factor

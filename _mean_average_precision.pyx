@@ -53,10 +53,10 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
         
-    	total_number_of_relevant_documents = 0
+        total_number_of_relevant_documents = 0
     	
         for i in range(N):
-        	total_number_of_relevant_documents += <float>1.0 if labels_test[q, 0] == labels_train[index, 0] else <float>0.0
+            total_number_of_relevant_documents += <float>1.0 if labels_test[q, 0] == labels_train[index, 0] else <float>0.0
         
         if number_of_relative_docs != 0:
             precision = cumulative / pos
@@ -110,10 +110,10 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
         
-    	total_number_of_relevant_documents = 0
+        total_number_of_relevant_documents = 0
     	
         for i in range(N):
-        	total_number_of_relevant_documents += <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
+            total_number_of_relevant_documents += <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
         	
         if number_of_relative_docs != 0:
             precision = cumulative / pos

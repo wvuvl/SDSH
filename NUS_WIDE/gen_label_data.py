@@ -38,11 +38,6 @@ labels = sorted(labels, key=lambda l: np.sum(l[1]))
 for (l, a) in labels:
     print("{0} {1}".format(l, np.sum(a))) 
     
-
-
-for (l, a) in labels:
-    print("{0} {1}".format(l, np.sum(a))) 
-
 labels = [(l[7:-4], a) for (l, a) in labels]
 
 for (l, a) in labels:
@@ -50,6 +45,10 @@ for (l, a) in labels:
 
 keptlabels = labels[-21:]
 
+print('kept')
+
+for (l, a) in keptlabels:
+    print("{0} {1}".format(l, np.sum(a))) 
 #labels = labels[-21:]
 
 labels_ids = {}
