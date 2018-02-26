@@ -5,6 +5,7 @@ import pickle
 import sys
 import time
 from pprint import pformat
+from shutil import copyfile
 
 import tensorflow as tf
 import numpy as np
@@ -98,76 +99,63 @@ class Train:
         
         config = tf.ConfigProto(device_count = {'GPU': 1})
 
+        # Structude
+        # path_to_train | path_to_test | path_to_db(None if not applicable) | if true labels are compared by equality op, otherwise by and op. | top_n
+        data_dict = {
+            "cifar_full":        ['items_train.pkl',                    'items_test.pkl',                     None,                                     False,      0],
+            "cifar_reduced":     ['items_train_cifar_reduced.pkl',      'items_test_cifar_reduced.pkl',       'items_db_cifar_reduced.pkl',             False,      0],
+            "nus2100.10500":     ['items_train_nuswide_2100.10500.pkl', 'items_test_nuswide_2100.10500.pkl',  'items_db_nuswide_2100.10500.pkl',        True,    5000],
+            "nus5000.10000":     ['items_train_nuswide_5000.10000.pkl', 'items_test_nuswide_5000.10000.pkl',  'items_db_nuswide_5000.10000.pkl',        True,    5000],
+            "nus2100._":         ['items_train_nuswide_2100._.pkl',     'items_test_nuswide_2100._.pkl',      None,                                     True,   50000],
+            "imagenet":          ['items_train_imagenet.pkl',           'items_test_imagenet.pkl',            'items_db_imagenet.pkl',                  False,   5000],
+            "mnist":             ['mnist_train.pkl',                    'mnist_test.pkl',                     False,                                    False,      0],
+        }
+
+        if cfg.dataset is None:
+            cfg.dataset = "cifar_full"
+
         with tf.Graph().as_default(), tf.Session(config=config) as session:
             logger.info("\n{0}\n{1}\n{0}\n".format("-" * 80, name))
             logger.info("\nSettings:\n{0}".format(pformat(vars(cfg))))
 
-            items_test = []
-            items_train = []
             items_db = []
-            self.and_mode = False
+            self.and_mode = data_dict[cfg.dataset][3]
+            self.top_n = data_dict[cfg.dataset][4]
 
-            if cfg.dataset is None:
-                with open('temp/items_train.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/items_test.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-            elif cfg.dataset == "cifar_reduced":
-                with open('temp/items_train_cifar_reduced.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/items_test_cifar_reduced.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-                with open('temp/items_db_cifar_reduced.pkl', 'rb') as pkl:
-                    items_db = pickle.load(pkl)
-            elif cfg.dataset == "nus2100.10500":
-                with open('temp/items_train_nuswide_2100.10500.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide_2100.10500.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-                with open('temp/items_db_nuswide_2100.10500.pkl', 'rb') as pkl:
-                    items_db = pickle.load(pkl)
-                self.and_mode = True
-                self.top_n = 5000
-            elif cfg.dataset == "nus5000.10000":
-                with open('temp/items_train_nuswide_5000.10000.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide_5000.10000.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-                with open('temp/items_db_nuswide_5000.10000.pkl', 'rb') as pkl:
-                    items_db = pickle.load(pkl)
-                self.and_mode = True
-                self.top_n = 5000
-            elif cfg.dataset == "nus2100._":
-                with open('temp/items_train_nuswide_2100._.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/items_test_nuswide_2100._.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-                self.and_mode = True
-                self.top_n = 50000
-            elif cfg.dataset == "imagenet":
-                with open('data/imagenet/items_train_imagenet.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('data/imagenet/items_test_imagenet.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
-                with open('data/imagenet/items_db_imagenet.pkl', 'rb') as pkl:
-                    items_db = pickle.load(pkl)
-                self.and_mode = False
-                self.top_n = 5000
-            elif cfg.dataset == "mnist":
-                with open('temp/mnist_train.pkl', 'rb') as pkl:
-                    items_train = pickle.load(pkl)
-                with open('temp/mnist_test.pkl', 'rb') as pkl:
-                    items_test = pickle.load(pkl)
+            ## Save dataset partitions
+            copyfile(os.path.join('temp', data_dict[cfg.dataset][0]), os.path.join(path, data_dict[cfg.dataset][0]))
+            copyfile(os.path.join('temp', data_dict[cfg.dataset][1]), os.path.join(path, data_dict[cfg.dataset][1]))
+            if data_dict[cfg.dataset][2] is not None:
+                copyfile(os.path.join('temp', data_dict[cfg.dataset][2]), os.path.join(path, data_dict[cfg.dataset][2]))
 
-            if len(items_db) > 0:
-                l = (len(items_db) // 100) * 100
-                items_db = items_db[:l]
+            with open('temp/' + data_dict[cfg.dataset][0], 'rb') as pkl:
+                items_train = pickle.load(pkl)
+            with open('temp/' + data_dict[cfg.dataset][1], 'rb') as pkl:
+                items_test = pickle.load(pkl)
 
-            l = (len(items_train) // 100) * 100
+            if data_dict[cfg.dataset][2] is not None:
+                with open('temp/' + data_dict[cfg.dataset][2], 'rb') as pkl:
+                    items_db = pickle.load(pkl)
 
-            items_train = items_train[:l]
-            print(len(items_db))
-            print(len(items_train))
+            # Should be divisible by 100
+            # The reason is to keep testing procedure simple. For testing size of batch is 100
+            # and in a such way, we do not have reminder.
+            # Testing sets so far all divisible by 100
+            # Just pad db and training sets to make them also divisible by 100
+
+            def pad(array):
+                if len(array) % 100 != 0:
+                    padding = 100 - len(array) % 100
+                    array += array[:padding]
+
+            pad(items_db)
+            pad(items_train)
+            #Do not pad test. We want to keep everything fair, will fail if not divisible by 100 on assert below
+            #pad(items_test)
+
+            print('DB set size: %d' % len(items_db))
+            print('Train set size: %d' % len(items_train))
+            print('Test set size: %d' % len(items_test))
 
             assert(len(items_db) % 100 == 0)
             assert(len(items_train) % 100 == 0)
