@@ -2,7 +2,7 @@ from train import Train
 
 if __name__ == '__main__':
 
-    path = "experiments"
+    path = "exp_cifar_full_simplespring"
 
     train = Train()
 

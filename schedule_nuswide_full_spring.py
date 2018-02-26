@@ -2,7 +2,7 @@ from train import Train
 
 if __name__ == '__main__':
 
-    path = "experiments"
+    path = "exp_nuswide_full_spring"
 
     train = Train()
 

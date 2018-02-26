@@ -2,14 +2,14 @@ from train import Train
 
 if __name__ == '__main__':
 
-    path = "experiments"
+    path = "exp_cifar_full_marginloss"
 
     train = Train()
 
     experiments = [
         # CIFAR10
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 24,
             "margin": 2.0,
             "batch_size": 150,
@@ -20,7 +20,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 24,
             "margin": 2.0,
             "batch_size": 150,
@@ -31,7 +31,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 16,
             "margin": 2.0,
             "batch_size": 150,
@@ -42,7 +42,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 32,
             "margin": 2.0,
             "batch_size": 150,
@@ -53,7 +53,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 48,
             "margin": 2.0,
             "batch_size": 150,
@@ -64,7 +64,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 8,
             "margin": 2.0,
             "batch_size": 150,
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             "learning_rate_decay_factor": 2.0 / 3.0
         },
         {
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 12,
             "margin": 2.0,
             "batch_size": 150,

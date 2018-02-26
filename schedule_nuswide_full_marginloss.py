@@ -2,7 +2,7 @@ from train import Train
 
 if __name__ == '__main__':
 
-    path = "experiments"
+    path = "exp_nuswide_full_marginloss"
 
     train = Train()
 
@@ -10,7 +10,7 @@ if __name__ == '__main__':
         # NUS_WIDE 2100._
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 24,
             "margin": 2.0,
             "batch_size": 150,
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         },
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 16,
             "margin": 2.0,
             "batch_size": 150,
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         },
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 32,
             "margin": 2.0,
             "batch_size": 150,
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         },
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 12,
             "margin": 2.0,
             "batch_size": 150,
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         },
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 8,
             "margin": 2.0,
             "batch_size": 150,
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         },
         {
             "dataset": "nus2100._",
-            "loss": "loss_triplet",
+            "loss": "marginloss",
             "hash_size": 48,
             "margin": 2.0,
             "batch_size": 150,

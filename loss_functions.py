@@ -231,6 +231,7 @@ losses = {
     "loss_accv" : loss_accv,
     "loss_accv_mod" : loss_accv_mod,
     "loss_triplet" : loss_triplet,
+    "marginloss" : loss_triplet,
     "loss_spring" : loss_spring,
     "loss_simplespring" : loss_simplespring,
 }
