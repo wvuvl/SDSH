@@ -336,11 +336,14 @@ class Train:
         else:
             S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
 
-        M = np.matmul(np.matmul(H.T, S), H) + eta * np.matmul(H.T, H)
+        R = np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)
+        for i in range(500):
+            #update B
+            B = np.matmul(S, np.sign(np.matmul(H, R)))
 
-        U, s, Vh = np.linalg.svd(M, full_matrices=False)
-
-        R = Vh
+            #update R
+            U, s, Vh = np.linalg.svd(np.matmul(B.T, H), full_matrices=False)
+            R = np.matmul(Vh.T, U.T)
 
         b_train_r = np.matmul(self.b_train, R)
         b_test_r = np.matmul(self.b_test, R)
