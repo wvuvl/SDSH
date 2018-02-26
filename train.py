@@ -268,7 +268,7 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-        self.Rotation(directory, eta=.3)
+        self.Rotation(directory)
 
         with open(os.path.join(directory, "Done.txt"), "a") as file:
             file.write("\n")
@@ -305,7 +305,7 @@ class Train:
 
         self.FAcc = map_test
 
-    def Rotation(self, directory, eta):
+    def Rotation(self, directory):
         self.logger.info("Starting rotations")
         labels = self.l_train
         H = self.b_train
@@ -338,10 +338,10 @@ class Train:
         b_db_r = np.matmul(self.b_db, R)
         self.logger.info("Finished rotations")
 
-        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, eta)
+        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, True)
         return
 
-    def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, eta=None):
+    def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, rotations=False):
         self.logger.info("Starting evaluation")
         map_train, map_test, curve = evaluate(
               l_train
@@ -354,10 +354,10 @@ class Train:
             , and_mode=self.and_mode
             , force_slow=self.and_mode)
 
-        if eta is None:
+        if rotations:
             report_string = "Test on train: {0}; Test on test: {1}".format(map_train, map_test)
         else:
-            report_string = "Rotation: Eta: {0}; Test on train: {1}; Test on test: {2}".format(eta, map_train, map_test)
+            report_string = "Rotation: Test on train: {0}; Test on test: {1}".format(map_train, map_test)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(report_string + "\n")
