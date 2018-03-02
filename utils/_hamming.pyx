@@ -18,24 +18,19 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
+cdef extern from "intrin.h":
+    np.uint32_t __popcnt(np.uint32_t value);
+    np.uint64_t __popcnt64(np.uint64_t value);
 
-cdef inline np.int8_t __hamming_distance_2(np.uint32_t x, np.uint32_t y):
-    cdef np.uint32_t v = x ^ y
-    v = v - ((v >> 1) & 0x55555555U)
-    v = (v & 0x33333333U) + ((v >> 2) & 0x33333333U)
-    v = (v + (v >> 4)) & 0x0f0f0f0fU
-    return (v * 0x01010101U) >> 24
-
-
-cdef inline np.int8_t __hamming_distance(np.uint32_t x, np.uint32_t y):
+cdef inline np.int8_t __hamming_distance32(np.uint32_t x, np.uint32_t y):
     cdef np.int8_t dist = 0
     cdef np.uint32_t val = x ^ y
-    while val:
-        dist += 1
-        val &= val - 1
+    return __popcnt(val)
 
-    return dist
-
+cdef inline np.int8_t __hamming_distance64(np.uint64_t x, np.uint64_t y):
+    cdef np.int8_t dist = 0
+    cdef np.uint64_t val = x ^ y
+    return __popcnt64(val)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -59,6 +54,26 @@ cdef np.uint32_t[::1] __to_int32_hashes(np.ndarray[np.float32_t, ndim=2] p):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cdef np.uint64_t[::1] __to_int64_hashes(np.ndarray[np.float32_t, ndim=2] p):
+    cdef np.intp_t w = p.shape[1]
+    cdef np.intp_t h = p.shape[0]
+    cdef np.uint64_t output = 0
+    cdef np.uint64_t power = 1
+    cdef np.float32_t[:, ::1] p_v = p;
+
+    cdef np.uint64_t[::1] out = np.zeros(h, dtype=np.uint64)
+    for x in range(h):
+        output = 0
+        power = 1
+        for y in range(w):
+            if p_v[x, y] > 0.0:
+                output += power
+            power *= 2
+        out[x] = output
+    return out
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def calc_hamming_dist(b1, b2):
     """Compute the hamming distance between every pair of data points represented in each row of b1 and b2"""
     cdef np.uint32_t[::1] p1 = __to_int32_hashes(b1)
@@ -76,7 +91,26 @@ def calc_hamming_dist(b1, b2):
 
     for x in range(l1):
         for y in range(l2):
-            out_v[x, y] = __hamming_distance_2(p1[x], p2[y])
+            out_v[x, y] = __hamming_distance32(p1[x], p2[y])
+
+    return out
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def calc_hamming_dist64(b1, b2):
+    """Compute the hamming distance between every pair of data points represented in each row of b1 and b2"""
+    cdef np.uint64_t[::1] p1 = __to_int64_hashes(b1)
+    cdef np.uint64_t[::1] p2 = __to_int64_hashes(b2)
+
+    cdef np.intp_t l1 = p1.shape[0]
+    cdef np.intp_t l2 = p2.shape[0]
+
+    cdef np.ndarray[np.int8_t, ndim=2] out = np.zeros([l1, l2], dtype=np.int8)
+    cdef np.int8_t[:, ::1] out_v = out;
+
+    for x in range(l1):
+        for y in range(l2):
+            out_v[x, y] = __hamming_distance64(p1[x], p2[y])
 
     return out
 
@@ -88,7 +122,7 @@ def sort(a):
     cdef np.intp_t l1 = a.shape[0]
     cdef np.intp_t l2 = a.shape[1]
 
-    cdef np.int32_t[33] count
+    cdef np.int32_t[65] count
     cdef np.int32_t total
     cdef np.int32_t old_count
     cdef np.int8_t key
@@ -99,13 +133,13 @@ def sort(a):
     cdef np.int32_t[::1] tmp = np.zeros([l2], dtype=np.int32)
 
     for x in range(l1):
-        for i in range(33):
+        for i in range(65):
             count[i] = 0
         for y in range(l2):
             count[a_v[x, y]] += 1
         total = 0
         old_count = 0
-        for i in range(33):
+        for i in range(65):
             old_count = count[i]
             count[i] = total
             total += old_count

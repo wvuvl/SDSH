@@ -15,17 +15,20 @@
 """Methods to work with hashes"""
 
 import numpy as np
-#from timer import timer
 
+import pyximport
+pyximport.install(setup_args={'include_dirs': np.get_include()})
 try:
-    import pyximport
-    pyximport.install(setup_args={'include_dirs': np.get_include()})
     from utils import _hamming
-    has_cython = True
+    from utils.timer import timer
 except:
-    has_cython = False
+    import _hamming
+    import timer
+
+has_cython = True
 
 
+@timer
 def calc_hamming_dist(b1, b2):
     """Compute the hamming distance between every pair of data points represented in each row of b1 and b2"""
     p1 = np.sign(b1).astype(np.int8)
@@ -36,12 +39,15 @@ def calc_hamming_dist(b1, b2):
     return d
 
 
-#@timer
+@timer
 def calc_hamming_rank(b1, b2, force_slow=False):
     """Return rank of pairs. Takes vector of hashes b1 and b2 and returns correspondence rank of b1 to b2
     """
     if has_cython and b1.shape[1] < 33 and not force_slow:
-        dist_h = _hamming.calc_hamming_dist(b2, b1)
+        dist_h = _hamming.calc_hamming_dist64(b2, b1)
+        return _hamming.sort(dist_h)
+    elif has_cython and b1.shape[1] < 65 and not force_slow:
+        dist_h = _hamming.calc_hamming_dist64(b2, b1)
         return _hamming.sort(dist_h)
     else:
         print("Warning. Using slow \"calc_hamming_dist\"")
@@ -51,8 +57,11 @@ def calc_hamming_rank(b1, b2, force_slow=False):
 
 # For testing
 if __name__ == '__main__':
-    b1 = np.random.rand(10, 24) - 0.5
-    b2 = np.random.rand(20, 24) - 0.5
+    b1 = np.random.rand(10, 48).astype(np.float32) - 0.5
+    b2 = np.random.rand(20, 48).astype(np.float32) - 0.5
+    d1_ = _hamming.calc_hamming_dist64(b2, b1)
+    d2_ = calc_hamming_dist(b2, b1)
+    print("Passed!" if (d1_ == d2_).all() else "Failed!")
 
     d1 = calc_hamming_rank(b1, b2)
     d2 = calc_hamming_rank(b1, b2, force_slow=True)
@@ -61,8 +70,8 @@ if __name__ == '__main__':
 
     print("Passed!" if (d1 == d2).all() else "Failed!")
 
-    b1 = np.random.rand(10000, 32) - 0.5
-    b2 = np.random.rand(40000, 32) - 0.5
+    b1 = np.random.rand(500, 48).astype(np.float32) - 0.5
+    b2 = np.random.rand(700, 48).astype(np.float32) - 0.5
 
     d1 = calc_hamming_rank(b1, b2)
     d2 = calc_hamming_rank(b1, b2, force_slow=True)
