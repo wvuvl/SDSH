@@ -16,7 +16,7 @@
 import numpy as np
 
 from utils.hamming import calc_hamming_rank
-from utils import timer
+from utils.timer import timer
 
 try:
     import pyximport
@@ -27,19 +27,20 @@ except:
     has_cython = False
 
 
-#@timer.timer
+@timer
 def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, and_mode=False, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
-    order = calc_hamming_rank(hashes_train, hashes_test, force_slow)
+    order = calc_hamming_rank(hashes_train, hashes_test)
 
     if has_cython and not force_slow:
         return _mean_average_precision.calc_map(order, labels_train, labels_test, top_n, and_mode)
     else:
-        print("Warning. Using slow \"compute_map\"")
+        #print("Warning. Using slow \"compute_map\"")
         s = __compute_s(labels_train, labels_test, and_mode)
         return __calc_map(order, np.transpose(s), top_n)
 
 
+@timer
 def __compute_s(train_l, test_l, and_mode):
     """Return similarity matrix between two label vectors
     The output is binary matrix of size n_train x n_test
@@ -50,6 +51,7 @@ def __compute_s(train_l, test_l, and_mode):
         return np.equal(train_l, np.transpose(test_l))
 
 
+@timer
 def __calc_map(order, s, top_n):
     """compute mean average precision (MAP)"""
     Q, N = s.shape

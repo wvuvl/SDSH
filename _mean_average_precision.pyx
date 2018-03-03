@@ -17,6 +17,7 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from utils.timer import timer
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -76,9 +77,10 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
     return map, curve
 
 
+#@timer
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np.uint32_t[:,::1] labels_test, int top_n):
+cdef __calc_map_and(np.int32_t[:,::1] order, np.uint64_t[:,::1] labels_trainL, np.uint64_t[:,::1] labels_trainH, np.uint64_t[:,::1] labels_testL, np.uint64_t[:,::1] labels_testH, int top_n):
     """compute mean average precision (MAP)"""
 
     cdef np.float32_t map = <float>0.0
@@ -106,14 +108,14 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
     for q in range(Q):
         for i in range(top_n):
             index = order[q, i]
-            relevance[i] = <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
+            relevance[i] = <float>1.0 if ((labels_testL[q] & labels_trainL[index]) | (labels_testH[q] & labels_trainH[index])) != <unsigned int>0 else <float>0.0
         cumulative = np.cumsum(relevance)
         number_of_relative_docs = cumulative[top_n-1]
         
         total_number_of_relevant_documents = 0
     	
         for i in range(N):
-            total_number_of_relevant_documents += <float>1.0 if (labels_test[q, 0] & labels_train[index, 0]) != <unsigned int>0 else <float>0.0
+            total_number_of_relevant_documents += <float>1.0 if ((labels_testL[q] & labels_trainL[index]) | (labels_testH[q] & labels_trainH[index])) != <unsigned int>0 else <float>0.0
         	
         if number_of_relative_docs != 0:
             precision = cumulative / pos
@@ -135,8 +137,22 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint32_t[:,::1] labels_train, np
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def labeles_to_two_64bword(np.ndarray labels):
+    cdef np.intp_t N = labels.shape[0]
+    cdef np.uint64_t[::1] outh = np.zeros(N, dtype=np.uint64)
+    cdef np.uint64_t[::1] outl = np.zeros(N, dtype=np.uint64)
+    for i in range(N):
+        outh[i] = (np.uint64)((labels[i] >> 64) & 0xFFFFFFFFFFFFFFFF)
+        outl[i] = (np.uint64)((labels[i]) & 0xFFFFFFFFFFFFFFFF)
+    return outl, outh
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def calc_map(order, labels_train, labels_test, top_n, and_mode):
     if and_mode:
-        return __calc_map_and(order.astype(np.int32), labels_train.astype(np.uint32), labels_test.astype(np.uint32), top_n)
+        labels_trainL, labels_trainH = labeles_to_two_64bword(labels_train)
+        labels_testL, labels_testH = labeles_to_two_64bword(labels_test)
+        return __calc_map_and(order.astype(np.int32), labels_trainL, labels_trainH, labels_testL, labels_testH, top_n)
     else:
         return __calc_map(order.astype(np.int32), labels_train.astype(np.int8), labels_test.astype(np.int8), top_n)
