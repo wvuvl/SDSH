@@ -493,7 +493,7 @@ class Train:
 
             updated = False
             for w in range(worker_count):
-                print("%f " % results[w][0], end='')
+                #print("%f " % results[w][0], end='')
                 if results[w][0] > mapd0:
                     R = results[w][1]
                     mapd0 = results[w][0]
