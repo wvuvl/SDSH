@@ -455,6 +455,8 @@ PYBIND11_MODULE(_hashranking, m) {
 		.def("Init", &HashRankingContext::Init)
 		.def("LoadQueryHashes", &HashRankingContext::LoadQueryHashes)
 		.def("LoadDBHashes", &HashRankingContext::LoadDBHashes)
+		.def("LoadQueryLabels", &HashRankingContext::LoadQueryLabels)
+		.def("LoadDBLabels", &HashRankingContext::LoadDBLabels)
 		.def("LoadQueryLabelsLDW", &HashRankingContext::LoadQueryLabelsLDW)
 		.def("LoadDBLabelsLDW", &HashRankingContext::LoadDBLabelsLDW)
 		.def("LoadQueryLabelsHDW", &HashRankingContext::LoadQueryLabelsHDW)
