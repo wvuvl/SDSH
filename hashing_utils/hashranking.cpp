@@ -25,6 +25,9 @@
 #include <intrin.h>
 #define popcount32 __popcnt
 #define popcount64 __popcnt64
+#else
+#define popcount32 __builtin_popcount
+#define popcount64 __builtin_popcountll
 #endif
 
 #include <inttypes.h>
