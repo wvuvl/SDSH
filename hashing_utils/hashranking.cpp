@@ -57,7 +57,7 @@ inline uint8_t hamming_distance32(uint32_t x, uint32_t y)
 inline uint8_t hamming_distance64(uint64_t x, uint64_t y)
 {
     uint64_t val = x ^ y;
-    return (uint8_t)__popcnt64(val);
+    return (uint8_t)popcount64(val);
 }
 
 void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* out)
