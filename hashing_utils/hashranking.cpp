@@ -34,7 +34,7 @@
 
 namespace py = pybind11;
 
-inline float fdot(int n, float *sx, float *sy)
+inline float fdot(int n, float* __restrict sx, float* __restrict sy)
 {
 	float stemp = 0.0f;
 	int m = n - 4;
@@ -60,7 +60,7 @@ inline uint8_t hamming_distance64(uint64_t x, uint64_t y)
     return (uint8_t)popcount64(val);
 }
 
-void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* out)
+void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* __restrict out)
 {
 	auto p = x.unchecked<2>();
     int w = (int)p.shape(1);
@@ -70,7 +70,7 @@ void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* out)
 	{
         uint32_t output = 0;
         uint32_t power = 1;
-		const float* hash = p.data(i, 0);
+		const float* __restrict hash = p.data(i, 0);
 		
 		for (int y = 0; y < w; ++y)
 		{
@@ -81,7 +81,7 @@ void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* out)
 	}
 }
 
-void to_int64_hashes(py::array_t<float, py::array::c_style> x, uint64_t* out)
+void to_int64_hashes(py::array_t<float, py::array::c_style> x, uint64_t* __restrict out)
 {
 	auto p = x.unchecked<2>();
     int w = (int)p.shape(1);
@@ -91,7 +91,7 @@ void to_int64_hashes(py::array_t<float, py::array::c_style> x, uint64_t* out)
 	{
         uint64_t output = 0;
         uint64_t power = 1;
-		const float* hash = p.data(i, 0);
+		const float* __restrict hash = p.data(i, 0);
 		
 		for (int y = 0; y < w; ++y)
 		{
@@ -317,8 +317,8 @@ public:
 		{
 		case HS32b:
 		{
-			uint32_t* queryhashes = reinterpret_cast<uint32_t*>(m_queryhashes);
-			uint32_t* dbhashes = reinterpret_cast<uint32_t*>(m_dbhashes);
+			uint32_t* __restrict queryhashes = reinterpret_cast<uint32_t*>(m_queryhashes);
+			uint32_t* __restrict dbhashes = reinterpret_cast<uint32_t*>(m_dbhashes);
 
 			for (int j = 0; j < m_db_size; ++j)
 			{
@@ -329,8 +329,8 @@ public:
 		}
 		case HS64b:
 		{
-			uint64_t* queryhashes = reinterpret_cast<uint64_t*>(m_queryhashes);
-			uint64_t* dbhashes = reinterpret_cast<uint64_t*>(m_dbhashes);
+			uint64_t* __restrict queryhashes = reinterpret_cast<uint64_t*>(m_queryhashes);
+			uint64_t* __restrict dbhashes = reinterpret_cast<uint64_t*>(m_dbhashes);
 
 			for (int j = 0; j < m_db_size; ++j)
 			{
@@ -429,20 +429,20 @@ private:
 	LabelComparing m_lc;
 	int m_db_size;
 	int m_query_size;
-	uint8_t* m_dbhashes;
-	uint8_t* m_queryhashes;
-	uint8_t* m_dist;
-	uint32_t* m_rank;
-	uint32_t* m_tmp;
-	uint32_t* m_labels_db;
-	uint32_t* m_labels_query;
-	uint64_t* m_labels_dbLDW;
-	uint64_t* m_labels_dbHDW;
-	uint64_t* m_labels_queryLDW;
-	uint64_t* m_labels_queryHDW;
-	float* m_relevance;
-	float* m_cumulative;
-	float* m_precision;
+	uint8_t* __restrict m_dbhashes;
+	uint8_t* __restrict m_queryhashes;
+	uint8_t* __restrict m_dist;
+	uint32_t* __restrict m_rank;
+	uint32_t* __restrict m_tmp;
+	uint32_t* __restrict m_labels_db;
+	uint32_t* __restrict m_labels_query;
+	uint64_t* __restrict m_labels_dbLDW;
+	uint64_t* __restrict m_labels_dbHDW;
+	uint64_t* __restrict m_labels_queryLDW;
+	uint64_t* __restrict m_labels_queryHDW;
+	float* __restrict m_relevance;
+	float* __restrict m_cumulative;
+	float* __restrict m_precision;
 };
 
 
