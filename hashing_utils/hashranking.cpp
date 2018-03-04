@@ -205,7 +205,7 @@ public:
 		}
 	}
 	
-	void LoadQueryLabels(py::array_t<uint32_t, py::array::c_style> x)
+	void LoadQueryLabels(py::array_t<uint32_t, py::array::c_style | py::array::forcecast> x)
 	{
 		if (x.unchecked<1>().shape(0) != m_query_size)
 		{
@@ -232,7 +232,7 @@ public:
 		memcpy(m_labels_queryHDW, x.unchecked<1>().data(0), 8 * m_query_size);
 	}
 	
-	void LoadDBLabels(py::array_t<uint32_t, py::array::c_style> x)
+	void LoadDBLabels(py::array_t<uint32_t, py::array::c_style | py::array::forcecast> x)
 	{
 		if (x.unchecked<1>().shape(0) != m_db_size)
 		{

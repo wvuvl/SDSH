@@ -311,7 +311,7 @@ def doRotation():
     step = 1.0
     R = R.astype(np.float32)
 
-    worker_count = 6
+    worker_count = 1
     steps = int(800 / worker_count)
     results = [(0, np.eye(hash_size, hash_size, dtype=np.float32)) for i in range(worker_count)]
 
@@ -341,16 +341,16 @@ def doRotation():
         for t in threads:
             t.join()
 
-        print("")
+        updated = False
         for w in range(worker_count):
             print("%f " % results[w][0], end='')
-            updated = False
             if results[w][0] > mapd0:
                 R = results[w][1]
                 mapd0 = results[w][0]
                 updated = True
-            if updated:
-                print("++++++++++++++ %f ++++++++++++++++" % mapd0)
+        print("")
+        if updated:
+            print("++++++++++++++ %f ++++++++++++++++" % mapd0)
 
     b_train = b_train_o
     l_train = l_train_o

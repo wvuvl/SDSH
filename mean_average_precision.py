@@ -27,7 +27,7 @@ except:
     has_cython = False
 
 
-@timer
+#@timer
 def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, and_mode=False, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
     order = calc_hamming_rank(hashes_train, hashes_test)
@@ -38,12 +38,12 @@ def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, a
         s = __compute_s(labels_train, labels_test, and_mode)
         return __calc_map(order, np.transpose(s), top_n)
 
-@timer
+#@timer
 def compute_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode=False):
     return _mean_average_precision.calc_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode)
 
 
-@timer
+#@timer
 def __compute_s(train_l, test_l, and_mode):
     """Return similarity matrix between two label vectors
     The output is binary matrix of size n_train x n_test
@@ -54,7 +54,7 @@ def __compute_s(train_l, test_l, and_mode):
         return np.equal(train_l, np.transpose(test_l))
 
 
-@timer
+#@timer
 def __calc_map(order, s, top_n):
     """compute mean average precision (MAP)"""
     Q, N = s.shape

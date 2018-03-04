@@ -16,6 +16,20 @@ import constructor
 import loss_functions
 from evaluate_performance import evaluate
 from gen_hashes import gen_hashes
+from mean_average_precision import compute_map
+from mean_average_precision import compute_map_fast
+from utils.random_rotation import random_rotation
+from random import random
+import threading
+
+
+def GetBaseRotation(alpha, size):
+    alphas = np.sin(alpha)
+    alphac = np.cos(alpha)
+    flat_rotation = np.array([[alphac, -alphas], [alphas, alphac]])
+    I = np.eye(size)
+    I[0:2, 0:2] = flat_rotation
+    return I.astype(np.float32)
 
 
 class Train:
@@ -268,7 +282,10 @@ class Train:
             self.TestAndSaveCheckpoint(model, session, items_train, items_test, items_db, cfg.hash_size,
                                        directory, embedding_conf, saver, global_step)
 
-        self.Rotation(directory)
+        self.RotationSSH(directory)
+        self.RotationITQ(directory)
+        self.RotationSITQ(directory)
+        self.RotationRandomSearch(directory)
 
         with open(os.path.join(directory, "Done.txt"), "a") as file:
             file.write("\n")
@@ -305,7 +322,7 @@ class Train:
 
         self.FAcc = map_test
 
-    def Rotation(self, directory):
+    def RotationSSH(self, directory):
         self.logger.info("Starting rotations")
         labels = self.l_train
         H = self.b_train
@@ -324,8 +341,75 @@ class Train:
         else:
             S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
 
+        S = S * 2.0 - 1.0
+
+        eta = 0.3
+
+        M = np.matmul(np.matmul(H.T, S), H) + eta * np.matmul(H.T, H)
+
+        U, s, Vh = np.linalg.svd(M, full_matrices=False)
+
+        R = Vh
+
+        b_train_r = np.matmul(self.b_train, R)
+        b_test_r = np.matmul(self.b_test, R)
+        b_db_r = np.matmul(self.b_db, R)
+        self.logger.info("Finished ITQ rotations")
+
+        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, "SSH")
+        return
+
+    def RotationITQ(self, directory):
+        self.logger.info("Starting rotations")
+        labels = self.l_train
+        H = self.b_train
+
+        size = labels.shape[0]
+
+        if size > 25000:
+            idx = np.random.randint(size, size=25000)
+            H = H[idx, :]
+
         R = np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)
         for i in range(500):
+            #update B
+            B = np.sign(np.matmul(H, R))
+
+            #update R
+            U, s, Vh = np.linalg.svd(np.matmul(B.T, H), full_matrices=False)
+            R = np.matmul(Vh.T, U.T)
+
+        b_train_r = np.matmul(self.b_train, R)
+        b_test_r = np.matmul(self.b_test, R)
+        b_db_r = np.matmul(self.b_db, R)
+        self.logger.info("Finished ITQ rotations")
+
+        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, "ITQ")
+        return
+
+    def RotationSITQ(self, directory):
+        self.logger.info("Starting SITQ rotations")
+        labels = self.l_train
+        H = self.b_train
+
+        size = labels.shape[0]
+
+        if size > 25000:
+            idx = np.random.randint(size, size=25000)
+            size = 25000
+            labels = labels[idx, :]
+            H = H[idx,:]
+
+        if self.and_mode:
+            S = np.bitwise_and(np.reshape(labels, [size, 1]),
+                               np.reshape(labels, [1, size])).astype(dtype=np.bool)
+        else:
+            S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
+
+        S = S * 2.0 - 1.0
+
+        R = np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)
+        for i in range(100):
             #update B
             B = np.matmul(S, np.sign(np.matmul(H, R)))
 
@@ -338,10 +422,95 @@ class Train:
         b_db_r = np.matmul(self.b_db, R)
         self.logger.info("Finished rotations")
 
-        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, True)
+        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, "SITQ")
         return
 
-    def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, rotations=False):
+    def RotationRandomSearch(self, directory):
+        self.logger.info("Starting RandomSearch rotations")
+        labels = np.array(self.l_train)
+        H = self.b_train.astype(np.float32)
+
+        size = labels.shape[0]
+
+        idx = np.random.permutation(size)
+
+        labels_q = labels
+        labels_db = labels
+        H_q = H
+        H_db = H
+
+        if size > 18000:
+            idx_q = np.copy(idx[:2000])
+            idx_db = np.copy(idx[2000:][:16000])
+            labels_q = labels[idx_q,:]
+            labels_db = labels[idx_db,:]
+            H_q = H[idx_q, :]
+            H_db = H[idx_db, :]
+        elif size > 5000:
+            idx_q = np.copy(idx[:2000])
+            idx_db = np.copy(idx[2000:])
+            labels_q = labels[idx_q,:]
+            labels_db = labels[idx_db,:]
+            H_q = H[idx_q, :]
+            H_db = H[idx_db, :]
+
+        print("DB size: %d Query set size: %d" % (H_db.shape[0], H_q.shape[0]))
+
+        R = np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)
+
+        mapd0 = compute_map_fast(H_db, H_q, labels_db, labels_q, and_mode=self.and_mode)
+        step = 1.0
+
+        worker_count = 1
+        steps = int(800 / worker_count)
+        results = [(0, np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)) for i in range(worker_count)]
+
+        for i in range(steps):
+            step = (steps - i) / steps
+
+            def ComputeNewValue(w):
+                rBasis = random_rotation(self.cfg.hash_size).astype(np.float32)
+                if random() > 0.5:
+                    s = step
+                else:
+                    s = -step
+
+                deltaR = np.matmul(rBasis.T, np.matmul(GetBaseRotation(s, self.cfg.hash_size), rBasis))
+                newR = np.matmul(R, deltaR)
+                rotated_data = np.matmul(H_db, newR)
+                rotated_data_q = np.matmul(H_q, newR)
+                mapd1 = compute_map_fast(rotated_data, rotated_data_q, labels_db, labels_q, and_mode=self.and_mode)
+                results[w] = (mapd1, newR)
+
+            threads = []
+            for w in range(worker_count):
+                t = threading.Thread(target=ComputeNewValue, args=(w,))
+                threads.append(t)
+                t.start()
+
+            for t in threads:
+                t.join()
+
+            updated = False
+            for w in range(worker_count):
+                print("%f " % results[w][0], end='')
+                if results[w][0] > mapd0:
+                    R = results[w][1]
+                    mapd0 = results[w][0]
+                    updated = True
+            print("")
+            if updated:
+                print("++++++++++++++ %f ++++++++++++++++" % mapd0)
+
+        b_train_r = np.matmul(self.b_train, R)
+        b_test_r = np.matmul(self.b_test, R)
+        b_db_r = np.matmul(self.b_db, R)
+        self.logger.info("Finished rotations")
+
+        self.eval(directory, self.l_train, b_train_r, self.l_test, b_test_r, self.l_db, b_db_r, "RandomSearch")
+        return
+
+    def eval(self, directory, l_train, b_train, l_test, b_test, l_db, b_db, prefix="No rotation"):
         self.logger.info("Starting evaluation")
         map_train, map_test, curve = evaluate(
               l_train
@@ -354,10 +523,7 @@ class Train:
             , and_mode=self.and_mode
             , force_slow=self.and_mode)
 
-        if rotations:
-            report_string = "Test on train: {0}; Test on test: {1}".format(map_train, map_test)
-        else:
-            report_string = "Rotation: Test on train: {0}; Test on test: {1}".format(map_train, map_test)
+        report_string = prefix + ": Test on train: {0}; Test on test: {1}".format(map_train, map_test)
 
         with open(os.path.join(directory, "results.txt"), "a") as file:
             file.write(report_string + "\n")

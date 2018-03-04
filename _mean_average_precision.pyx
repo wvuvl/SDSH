@@ -167,7 +167,7 @@ def calc_map(order, labels_train, labels_test, top_n, and_mode):
 @cython.wraparound(False)
 def calc_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode):
     hr = hamming.HashRankingContext()
-    hr.Init(hashes_train.shape[0], hashes_test.shape[0], 1, 1)
+    hr.Init(hashes_train.shape[0], hashes_test.shape[0], 1 if hashes_train.shape[1] > 32 else 0, 1 if and_mode else 0)
 
     hr.LoadQueryHashes(hashes_test)
     hr.LoadDBHashes(hashes_train)
@@ -179,8 +179,8 @@ def calc_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode
         hr.LoadQueryLabelsHDW(labels_testH)
         hr.LoadDBLabelsLDW(labels_trainL)
         hr.LoadDBLabelsHDW(labels_trainH)
-        return hr.Map()
     else:
-        hr.LoadQueryLabels(labels_test.astype(np.int32))
-        hr.LoadDBLabels(labels_train.astype(np.int32))
-        return hr.Map()
+        hr.LoadQueryLabels(np.array(labels_test).flatten().astype(np.int32))
+        hr.LoadDBLabels(np.array(labels_train).flatten().astype(np.int32))
+
+    return hr.Map()

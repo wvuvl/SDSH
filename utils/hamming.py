@@ -28,7 +28,7 @@ except:
 has_cython = True
 
 
-@timer
+#@timer
 def calc_hamming_dist(b1, b2):
     """Compute the hamming distance between every pair of data points represented in each row of b1 and b2"""
     p1 = np.sign(b1).astype(np.int8)
@@ -39,7 +39,7 @@ def calc_hamming_dist(b1, b2):
     return d
 
 
-@timer
+#@timer
 def calc_hamming_rank(b1, b2, force_slow=False):
     """Return rank of pairs. Takes vector of hashes b1 and b2 and returns correspondence rank of b1 to b2
     """

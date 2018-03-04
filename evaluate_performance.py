@@ -57,7 +57,7 @@ def map():
     with open('labels_test.pkl', 'rb') as pkl:
         labels_test = pickle.load(pkl)
 
-    m_fast = compute_map_fast(H, H, labels, labels
+    m_fast = compute_map_fast(H_test, H_test, labels_test, labels_test
     , and_mode = True)
     m1, curve1 = compute_map(H_test, H_test, labels_test, labels_test
     , and_mode = True)
