@@ -128,7 +128,7 @@ definitions = {
 
 extra_compile_args = {
     'darwin': [],
-    'posix': [],
+    'posix': ['-O3', '-funroll-loops', '-march=native', '-mfpmath=sse'],
     'win32': ['/MT', '/GL', '/GR-'],
 }
 
