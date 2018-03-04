@@ -1,0 +1,19 @@
+#!/bin/sh
+
+python schedule_nuswide_reduced_spring.py
+python schedule_nuswide_reduced_accv_mod.py
+python schedule_nuswide_reduced_marginloss.py
+
+python schedule_cifar_reduced_spring.py
+python schedule_cifar_reduced_accv_mod.py
+python schedule_cifar_reduced_marginloss.py
+
+python schedule_nuswide_full_marginloss.py
+python schedule_nuswide_full_spring.py
+python schedule_nuswide_full_accv_mod.py
+
+python schedule_cifar_full_spring.py
+python schedule_cifar_full_accv_mod.py
+python schedule_cifar_full_marginloss.py
+
+python schedule_mnist.py
