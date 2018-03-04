@@ -74,7 +74,7 @@ void to_int32_hashes(py::array_t<float, py::array::c_style> x, uint32_t* out)
 		
 		for (int y = 0; y < w; ++y)
 		{
-            output += (*p.data(i, y) > 0.0f ? power : 0); 
+            output += (hash[y] > 0.0f ? power : 0); 
             power *= 2;
 		}
         out[i] = output;
@@ -95,7 +95,7 @@ void to_int64_hashes(py::array_t<float, py::array::c_style> x, uint64_t* out)
 		
 		for (int y = 0; y < w; ++y)
 		{
-            output += (*p.data(i, y) > 0.0f ? power : 0); 
+            output += (hash[y] > 0.0f ? power : 0); 
             power *= 2;
 		}
         out[i] = output;
@@ -308,6 +308,7 @@ public:
 			return MapAnd();
 			break;
 		}
+		return 0.0f;
 	}
 	
 	void calc_hamming_dist(int x)

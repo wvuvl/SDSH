@@ -121,9 +121,9 @@ def build_extension(self, ext):
 build_ext.build_extension = build_extension
 
 definitions = {
-    'darwin': [("_GLFW_COCOA", 1)],
-    'posix': [("GLFW_USE_OSMESA", 0), ("GLFW_USE_WAYLAND", 0), ("GLFW_USE_MIR", 0), ("_GLFW_X11", 1)],
-    'win32': [("GLFW_USE_HYBRID_HPG", 0), ("_GLFW_WIN32", 1), ("_CRT_SECURE_NO_WARNINGS", 1), ("NOMINMAX", 1)],
+    'darwin': [],
+    'posix': [],
+    'win32': [("_CRT_SECURE_NO_WARNINGS", 1), ("NOMINMAX", 1)],
 }
 
 extra_compile_args = {
@@ -142,7 +142,7 @@ extension = Extension("_hashranking",
                              ['hashranking.cpp'],
                              define_macros = definitions[target_os],
                              include_dirs=["pybind11/include"],
-                             extra_compile_args=[],
+                             extra_compile_args=extra_compile_args[target_os],
                              extra_link_args=[],
                              libraries = [])
 
