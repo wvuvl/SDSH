@@ -18,6 +18,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from utils.timer import timer
+from hashranking import hamming
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -43,6 +44,7 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
     cdef np.float32_t number_of_relative_docs
+    cdef np.float32_t total_number_of_relevant_documents
 
     cdef int index
 
@@ -57,6 +59,7 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
         total_number_of_relevant_documents = 0
     	
         for i in range(N):
+            index = order[q, i]
             total_number_of_relevant_documents += <float>1.0 if labels_test[q, 0] == labels_train[index, 0] else <float>0.0
         
         if number_of_relative_docs != 0:
@@ -80,7 +83,7 @@ cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_
 #@timer
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef __calc_map_and(np.int32_t[:,::1] order, np.uint64_t[:,::1] labels_trainL, np.uint64_t[:,::1] labels_trainH, np.uint64_t[:,::1] labels_testL, np.uint64_t[:,::1] labels_testH, int top_n):
+cdef __calc_map_and(np.int32_t[:, ::1] order, np.uint64_t[::1] labels_trainL, np.uint64_t[::1] labels_trainH, np.uint64_t[::1] labels_testL, np.uint64_t[::1] labels_testH, int top_n):
     """compute mean average precision (MAP)"""
 
     cdef np.float32_t map = <float>0.0
@@ -102,6 +105,7 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint64_t[:,::1] labels_trainL, n
     cdef np.ndarray[np.float32_t, ndim=1] cumulative
     cdef np.float32_t ap
     cdef np.float32_t number_of_relative_docs
+    cdef np.float32_t total_number_of_relevant_documents
 
     cdef int index
 
@@ -115,8 +119,9 @@ cdef __calc_map_and(np.int32_t[:,::1] order, np.uint64_t[:,::1] labels_trainL, n
         total_number_of_relevant_documents = 0
     	
         for i in range(N):
+            index = order[q, i]
             total_number_of_relevant_documents += <float>1.0 if ((labels_testL[q] & labels_trainL[index]) | (labels_testH[q] & labels_trainH[index])) != <unsigned int>0 else <float>0.0
-        	
+
         if number_of_relative_docs != 0:
             precision = cumulative / pos
             recall = cumulative / total_number_of_relevant_documents 
@@ -150,9 +155,32 @@ def labeles_to_two_64bword(np.ndarray labels):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def calc_map(order, labels_train, labels_test, top_n, and_mode):
+
     if and_mode:
         labels_trainL, labels_trainH = labeles_to_two_64bword(labels_train)
         labels_testL, labels_testH = labeles_to_two_64bword(labels_test)
         return __calc_map_and(order.astype(np.int32), labels_trainL, labels_trainH, labels_testL, labels_testH, top_n)
     else:
         return __calc_map(order.astype(np.int32), labels_train.astype(np.int8), labels_test.astype(np.int8), top_n)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def calc_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode):
+    hr = hamming.HashRankingContext()
+    hr.Init(hashes_train.shape[0], hashes_test.shape[0], 1, 1)
+
+    hr.LoadQueryHashes(hashes_test)
+    hr.LoadDBHashes(hashes_train)
+
+    if and_mode:
+        labels_trainL, labels_trainH = labeles_to_two_64bword(labels_train)
+        labels_testL, labels_testH = labeles_to_two_64bword(labels_test)
+        hr.LoadQueryLabelsLDW(labels_testL)
+        hr.LoadQueryLabelsHDW(labels_testH)
+        hr.LoadDBLabelsLDW(labels_trainL)
+        hr.LoadDBLabelsHDW(labels_trainH)
+        return hr.Map()
+    else:
+        hr.LoadQueryLabels(labels_test.astype(np.int32))
+        hr.LoadDBLabels(labels_train.astype(np.int32))
+        return hr.Map()

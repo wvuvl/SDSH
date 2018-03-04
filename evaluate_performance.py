@@ -16,6 +16,7 @@
 import numpy as np
 import pickle
 from mean_average_precision import compute_map
+from mean_average_precision import compute_map_fast
 from utils import cifar10_reader
 
 def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n = 0, and_mode=False, force_slow=False, testOnTrain=False):
@@ -56,19 +57,17 @@ def map():
     with open('labels_test.pkl', 'rb') as pkl:
         labels_test = pickle.load(pkl)
 
-    m1, curve1 = compute_map(H, H_test, labels, labels_test
-    , top_n = 50000
+    m_fast = compute_map_fast(H, H, labels, labels
     , and_mode = True)
-    m2, curve2 = compute_map(H, H_test, labels, labels_test
-    , top_n = 50000
+    m1, curve1 = compute_map(H_test, H_test, labels_test, labels_test
+    , and_mode = True)
+    m2, curve2 = compute_map(H_test, H_test, labels_test, labels_test
     , and_mode = True
     ,force_slow=True)
 
+    print(m_fast)
     print(m1)
     print(m2)
-    print(curve1)
-    print(curve2)
-    print("Passed!" if (m1 == m2) and (curve1 == curve2).all() else "Failed!")
 
 if __name__ == '__main__':
     map()

@@ -23,12 +23,10 @@ cdef extern from "intrin.h":
     np.uint64_t __popcnt64(np.uint64_t value);
 
 cdef inline np.int8_t __hamming_distance32(np.uint32_t x, np.uint32_t y):
-    cdef np.int8_t dist = 0
     cdef np.uint32_t val = x ^ y
     return __popcnt(val)
 
 cdef inline np.int8_t __hamming_distance64(np.uint64_t x, np.uint64_t y):
-    cdef np.int8_t dist = 0
     cdef np.uint64_t val = x ^ y
     return __popcnt64(val)
 

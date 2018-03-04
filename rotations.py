@@ -6,9 +6,10 @@ import time
 from pprint import pformat
 from shutil import copyfile
 from mean_average_precision import compute_map
+from mean_average_precision import compute_map_fast
 from utils.random_rotation import random_rotation
 from random import random
-
+import threading
 import numpy as np
 
 from evaluate_performance import evaluate
@@ -309,24 +310,47 @@ def doRotation():
     mapd0, _ = compute_map(H_db, H_q, labels_db, labels_q, and_mode=True, force_slow=False)
     step = 1.0
     R = R.astype(np.float32)
-    for i in range(800):
-        rBasis = random_rotation(HASH_SIZE).astype(np.float32)
-        if random() > 0.5:
-            s = step
-        else:
-            s = -step
-        step = (800.0 - i) / 800.0
 
-        deltaR = np.matmul(rBasis.T, np.matmul(GetBaseRotation(s, HASH_SIZE), rBasis))
-        newR = np.matmul(R, deltaR)
-        rotated_data = np.matmul(H_db, newR)
-        rotated_data_q = np.matmul(H_q, newR)
-        mapd1, _ = compute_map(rotated_data, rotated_data_q, labels_db, labels_q, and_mode=True, force_slow=False)
-        print(mapd1)
-        if (mapd1 > mapd0):
-            R = newR
-            mapd0 = mapd1
-            print("++++++++++++++++++++++++++++++")
+    worker_count = 6
+    steps = int(800 / worker_count)
+    results = [(0, np.eye(hash_size, hash_size, dtype=np.float32)) for i in range(worker_count)]
+
+    for i in range(steps):
+        step = (steps - i) / steps
+
+        def ComputeNewValue(w):
+            rBasis = random_rotation(HASH_SIZE).astype(np.float32)
+            if random() > 0.5:
+                s = step
+            else:
+                s = -step
+
+            deltaR = np.matmul(rBasis.T, np.matmul(GetBaseRotation(s, HASH_SIZE), rBasis))
+            newR = np.matmul(R, deltaR)
+            rotated_data = np.matmul(H_db, newR)
+            rotated_data_q = np.matmul(H_q, newR)
+            mapd1 = compute_map_fast(rotated_data, rotated_data_q, labels_db, labels_q, and_mode=True)
+            results[w] = (mapd1, newR)
+
+        threads = []
+        for w in range(worker_count):
+            t = threading.Thread(target=ComputeNewValue, args=(w, ))
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        print("")
+        for w in range(worker_count):
+            print("%f " % results[w][0], end='')
+            updated = False
+            if results[w][0] > mapd0:
+                R = results[w][1]
+                mapd0 = results[w][0]
+                updated = True
+            if updated:
+                print("++++++++++++++ %f ++++++++++++++++" % mapd0)
 
     b_train = b_train_o
     l_train = l_train_o

@@ -31,13 +31,16 @@ except:
 def compute_map(hashes_train, hashes_test, labels_train, labels_test, top_n=0, and_mode=False, force_slow=False):
     """Compute MAP for given set of hashes and labels"""
     order = calc_hamming_rank(hashes_train, hashes_test)
-
     if has_cython and not force_slow:
         return _mean_average_precision.calc_map(order, labels_train, labels_test, top_n, and_mode)
     else:
         #print("Warning. Using slow \"compute_map\"")
         s = __compute_s(labels_train, labels_test, and_mode)
         return __calc_map(order, np.transpose(s), top_n)
+
+@timer
+def compute_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode=False):
+    return _mean_average_precision.calc_map_fast(hashes_train, hashes_test, labels_train, labels_test, and_mode)
 
 
 @timer
