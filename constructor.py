@@ -83,6 +83,6 @@ def net(batch_size, hash_size, margin=0, weight_decay_factor=0, loss_func=None):
 
     if loss_func is not None:
         model.weight_decay = weight_decay * weight_decay_factor
-        model.loss = loss_func(model.output, t_labels, hash_size, batch_size, margin, boolean_mask=t_boolmask) + model.weight_decay
+        model.loss = loss_func(model.output, t_labels, hash_size, batch_size, margin, boolean_mask=t_boolmask)
 
     return model

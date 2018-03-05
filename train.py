@@ -188,7 +188,8 @@ class Train:
             model = constructor.net(cfg.batch_size, cfg.hash_size, cfg.margin, cfg.weight_decay_factor, loss)
 
             tf.summary.scalar('weigh_decay', model.weight_decay)
-            tf.summary.scalar('total_loss_plus_weigh_decay', model.loss)
+            tf.summary.scalar('total_loss', model.loss)
+            model.loss += model.weight_decay
             tf.summary.image('embedding', tf.reshape(model.output, [-1, 1, cfg.hash_size, 1]))
 
             global_step = tf.contrib.framework.get_or_create_global_step()

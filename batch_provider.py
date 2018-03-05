@@ -17,7 +17,10 @@
 from random import shuffle
 import matplotlib.pyplot as plt
 from scipy import misc
+import random
+import numpy as np
 import lmdb
+import pickle
 try:
     import queue
 except ImportError:
@@ -130,13 +133,22 @@ class BatchProvider:
                     buffer.seek(0) 
                     image = misc.imread(buffer, mode='RGB')
                     #misc.imsave(str(i) + "_" + str(item[0])+ "test.jpg", image)
-            # Data augmentation. Should be removed from here
-            # if random.random() > 0.5:
-            #    im = np.fliplr(image)
-            # image = np.roll(im, random.randint(-21, 21), 0)
-            # image = np.roll(im, random.randint(-21, 21), 1)
-            # plt.imshow(image)
-            # plt.show()
+
+                # Similar to DVSQ https://github.com/caoyue10/cvpr17-dvsq/blob/master/net.py#L122
+                startx = image.shape[1] - self.image_size[0]
+                starty = image.shape[0] - self.image_size[1]
+                if self.cycled:
+                    startx = random.randint(0, startx)
+                    starty = random.randint(0, starty)
+                else:
+                    startx = startx // 2
+                    starty = starty // 2
+                image = image[starty:starty + self.image_size[1], startx:startx + self.image_size[0]]
+
+            # Similar to DVSQ https://github.com/caoyue10/cvpr17-dvsq/blob/master/net.py#L122
+            if self.cycled:
+                if random.random() > 0.5:
+                    image = np.fliplr(image)
 
             b_images.append(image)
             b_labels.append([item[0]])
@@ -149,10 +161,12 @@ class BatchProvider:
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from utils.cifar10_reader import Reader
-    
-    r = Reader('data/cifar-10-batches-bin')
 
-    p = BatchProvider(5, r.items)
+    #r = Reader('data/cifar-10-batches-bin')
+
+    #p = BatchProvider(20, r.items)
+    with open('temp/items_train_nuswide_5000.10000.pkl', 'rb') as pkl:
+        p = BatchProvider(20, pickle.load(pkl))
 
     b = p.get_batches()
 
