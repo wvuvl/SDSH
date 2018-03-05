@@ -18,17 +18,19 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-cdef extern from "intrin.h":
-    np.uint32_t __popcnt(np.uint32_t value);
-    np.uint64_t __popcnt64(np.uint64_t value);
+#cdef extern from "intrin.h":
+#    np.uint32_t __popcnt(np.uint32_t value);
+#    np.uint64_t __popcnt64(np.uint64_t value);
+cdef extern int __builtin_popcount(unsigned int) nogil
+cdef extern int __builtin_popcountll(unsigned long long) nogil
 
 cdef inline np.int8_t __hamming_distance32(np.uint32_t x, np.uint32_t y):
     cdef np.uint32_t val = x ^ y
-    return __popcnt(val)
+    return __builtin_popcount(val)
 
 cdef inline np.int8_t __hamming_distance64(np.uint64_t x, np.uint64_t y):
     cdef np.uint64_t val = x ^ y
-    return __popcnt64(val)
+    return __builtin_popcountll(val)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
