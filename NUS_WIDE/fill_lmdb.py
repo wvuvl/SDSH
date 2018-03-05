@@ -28,7 +28,7 @@ def run(file):
 		y_margin_down = h - w - y_margin_up
 		image = image[y_margin_up:-y_margin_down, :]
 
-	image = misc.imresize(image, (224, 224), interp='bilinear')
+	image = misc.imresize(image, (256, 256), interp='bilinear')
 
 	return image
 
@@ -43,7 +43,7 @@ def run(file):
 def saveAllToDB(env):
 	k = 0
 	with env.begin(write=True) as txn:
-		for root, dirs, files in os.walk("image"):
+		for root, dirs, files in os.walk("../data/nus_wide/image"):
 			root_ = os.path.basename(root)
 			for f in files:
 				try:
@@ -60,7 +60,7 @@ def saveAllToDB(env):
 					print("FAILED")
 	return k
 
-env = lmdb.open('nuswide', map_size= 8 * 1024 * 1024 * 1024)
+env = lmdb.open('../nuswide', map_size= 8 * 1024 * 1024 * 1024)
 k = saveAllToDB(env)
 
 print("Done {}", k)
