@@ -138,6 +138,7 @@ public:
 	{
 		LC_equality,
 		LC_and,
+    LC_weighted,
 	};
 	
 	void Init(int db_size, int query_size, int hs, int lc)
@@ -307,7 +308,11 @@ public:
 		case LC_and:
 			return MapAnd();
 			break;
+    case LC_weighted:
+      return MapWeighted();
+      break;
 		}
+ 
 		return 0.0f;
 	}
 	
@@ -424,6 +429,49 @@ private:
 		
 		return map;
 	}
+
+  int get_mir_relavance(uint32_t query, uint32_t sample)
+  {
+    uint32_t same = query & sample;
+    return (uint8_t) popcount32(same);
+  }
+
+  float MapWeighted()
+  {
+    float map = 0.0f;
+
+    for (int q = 0; q < m_query_size; q++)
+    {
+      Sort(q);
+      int relCount = 0;
+      float ap = 0.0f;
+      for (int p = 0; p < m_db_size; p ++)
+      {
+        int index = m_rank[p];
+        uint8_t m_rel = get_mir_relavance(m_labels_query[q],m_labels_db[index]);
+
+        if (m_rel > 0)
+        {
+          relCount++;
+          float acg = m_rel;
+          for (int n = p-1;n >= 0; n--)
+          {
+            index = m_rank[n];
+            acg += get_mir_relavance(m_labels_query[q],m_labels_db[index]);
+          }
+          acg /= (p+1);
+
+          ap += acg;
+        }
+      }
+      ap /= relCount;
+      map += ap;
+   }
+
+    map /= m_query_size;
+    return map;
+
+  }
 	
 	HashStorage m_hs;
 	LabelComparing m_lc;
