@@ -18,6 +18,8 @@ from __future__ import print_function
 import os
 import cgi
 import tarfile
+import gzip
+import shutil
 import zipfile
 try:
     from urllib import request
@@ -29,7 +31,7 @@ except ImportError:
     import cookielib as cookiejar
 
 
-def download(directory=".", url=None, google_drive_fileid=None, extract_targz=False, extract_zip=False, file_name=None):
+def download(directory=".", url=None, google_drive_fileid=None, extract_targz=False, extract_gz=False, extract_zip=False, file_name=None):
     """Downloads a file from provided URL or file id at google drive"""
 
     if url is None and google_drive_fileid is not None:
@@ -100,6 +102,14 @@ def download(directory=".", url=None, google_drive_fileid=None, extract_targz=Fa
     if extract_targz:
         print("Extracting...")
         tarfile.open(name=file_path, mode="r:gz").extractall(directory)
+        
+    if extract_gz:
+        file_out_path = file_path.replace('.gz','')
+            
+        print("Extracting...")
+        with gzip.open(file_path, 'rb') as f_in:
+            with open(file_out_path, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
     if extract_zip:
         print("Extracting...")
