@@ -18,13 +18,10 @@ import numpy as np
 from utils.hamming import calc_hamming_rank
 from utils.timer import timer
 
-try:
-    import pyximport
-    pyximport.install(setup_args={'include_dirs': np.get_include()})
-    import _mean_average_precision
-    has_cython = True
-except:
-    has_cython = False
+import pyximport
+pyximport.install(setup_args={'include_dirs': np.get_include()})
+import _mean_average_precision
+has_cython = True
 
 
 #@timer
