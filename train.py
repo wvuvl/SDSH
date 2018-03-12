@@ -7,6 +7,7 @@ import time
 from pprint import pformat
 from shutil import copyfile
 
+
 import tensorflow as tf
 import numpy as np
 from tensorflow.contrib.tensorboard.plugins import projector
@@ -110,19 +111,26 @@ class Train:
 
         logger.addHandler(file_handler)
         logger.addHandler(self.console_handler)
-        
+
         config = tf.ConfigProto(device_count = {'GPU': 1})
 
+        samples_comparison_method = {
+            "equality":0,
+            "and":1,
+            "weighted":2,
+        }
+
         # Structude
-        # path_to_train | path_to_test | path_to_db(None if not applicable) | if true labels are compared by equality op, otherwise by and op. | top_n
+        # path_to_train | path_to_test | path_to_db(None if not applicable) | sample comparison method | top_n
         data_dict = {
-            "cifar_full":        ['items_train.pkl',                    'items_test.pkl',                     None,                                     False,      0],
-            "cifar_reduced":     ['items_train_cifar_reduced.pkl',      'items_test_cifar_reduced.pkl',       'items_db_cifar_reduced.pkl',             False,      0],
-            "nus2100.10500":     ['items_train_nuswide_2100.10500.pkl', 'items_test_nuswide_2100.10500.pkl',  'items_db_nuswide_2100.10500.pkl',        True,    5000],
-            "nus5000.10000":     ['items_train_nuswide_5000.10000.pkl', 'items_test_nuswide_5000.10000.pkl',  'items_db_nuswide_5000.10000.pkl',        True,    5000],
-            "nus2100._":         ['items_train_nuswide_2100._.pkl',     'items_test_nuswide_2100._.pkl',      None,                                     True,   50000],
-            "imagenet":          ['items_train_imagenet.pkl',           'items_test_imagenet.pkl',            'items_db_imagenet.pkl',                  False,   5000],
-            "mnist":             ['mnist_train.pkl',                    'mnist_test.pkl',                     False,                                    False,      0],
+            "cifar_full":        ['items_train.pkl',                    'items_test.pkl',                     None,                                     "equality",  0],
+            "cifar_reduced":     ['items_train_cifar_reduced.pkl',      'items_test_cifar_reduced.pkl',       'items_db_cifar_reduced.pkl',             "equality",  0],
+            "nus2100.10500":     ['items_train_nuswide_2100.10500.pkl', 'items_test_nuswide_2100.10500.pkl',  'items_db_nuswide_2100.10500.pkl',        "and",       5000],
+            "nus5000.10000":     ['items_train_nuswide_5000.10000.pkl', 'items_test_nuswide_5000.10000.pkl',  'items_db_nuswide_5000.10000.pkl',        "and",       5000],
+            "nus2100._":         ['items_train_nuswide_2100._.pkl',     'items_test_nuswide_2100._.pkl',      None,                                     "and",       50000],
+            "imagenet":          ['items_train_imagenet.pkl',           'items_test_imagenet.pkl',            'items_db_imagenet.pkl',                  "equality",  5000],
+            "mnist":             ['mnist_train.pkl',                    'mnist_test.pkl',                     None,                                     "equality",   0],
+            "mirflickr":         ['mirflickr25train.pkl',               'mirflickr25test.pkl',                None,                                     "weighted",  0],
         }
 
         if cfg.dataset is None:
@@ -133,16 +141,18 @@ class Train:
             logger.info("\nSettings:\n{0}".format(pformat(vars(cfg))))
 
             items_db = []
-            self.and_mode = data_dict[cfg.dataset][3]
+            self.and_mode = samples_comparison_method[data_dict[cfg.dataset][3]]
             self.top_n = data_dict[cfg.dataset][4]
 
             ## Save dataset partitions
+
             copyfile(os.path.join('temp', data_dict[cfg.dataset][0]), os.path.join(path, data_dict[cfg.dataset][0]))
             copyfile(os.path.join('temp', data_dict[cfg.dataset][1]), os.path.join(path, data_dict[cfg.dataset][1]))
             if data_dict[cfg.dataset][2] is not None:
                 copyfile(os.path.join('temp', data_dict[cfg.dataset][2]), os.path.join(path, data_dict[cfg.dataset][2]))
 
             with open('temp/' + data_dict[cfg.dataset][0], 'rb') as pkl:
+                print(data_dict[cfg.dataset][0])
                 items_train = pickle.load(pkl)
             with open('temp/' + data_dict[cfg.dataset][1], 'rb') as pkl:
                 items_test = pickle.load(pkl)
@@ -176,8 +186,8 @@ class Train:
             assert(len(items_test) % 100 == 0)
 
             num_examples_per_epoch_for_train = len(items_train)
-
-            bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True, imagenet=cfg.dataset == "imagenet")
+            lmdb_file = './data/mirf' if cfg.dataset == 'mirflickr' else None
+            bp = batch_provider.BatchProvider(cfg.batch_size, items_train, cycled=True, imagenet=cfg.dataset == "imagenet",lmdb_file=lmdb_file)
 
             num_batches_per_epoch = num_examples_per_epoch_for_train / cfg.batch_size
             decay_steps = int(num_batches_per_epoch * cfg.number_of_epochs_per_decay)
@@ -243,12 +253,12 @@ class Train:
 
                 labels = feed_dict["labels"]
 
-                if self.and_mode:
+                if self.and_mode == 1:
                     labels = np.asarray(labels, np.object)
                 else:
                     labels = np.asarray(labels, np.uint32)
 
-                if self.and_mode:
+                if self.and_mode == 1 or self.and_mode == 2:
                     mask = np.bitwise_and(np.reshape(labels, [cfg.batch_size, 1]),
                                           np.reshape(labels, [1, cfg.batch_size])).astype(dtype=np.bool)
                 else:
@@ -303,17 +313,19 @@ class Train:
 
         self.logger.info("Start generating hashes")
 
-        longints = self.and_mode
+        longints = self.and_mode == 0
+
+        lmdb_file = "./data/mirf" if self.cfg.dataset == "mirflickr" else None
 
         self.l_train, self.b_train = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_train, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet")
+                                                model.output, session, items_train, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
 
         self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_test, hash_size, 1, longints=longints, imagenet=self.cfg.dataset == "imagenet")
+                                              model.output, session, items_test, hash_size, 1, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
 
         if len(items_db) > 0:
             self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
-                                       model.output, session, items_db, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet")
+                                              model.output, session, items_db, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
         else:
             self.l_db, self.b_db = self.l_train, self.b_train
 
@@ -336,11 +348,12 @@ class Train:
             labels = labels[idx,:]
             H = H[idx,:]
 
-        if self.and_mode:
+        if self.and_mode == 1 or self.and_mode == 2:
             S = np.bitwise_and(np.reshape(labels, [size, 1]),
                                np.reshape(labels, [1, size])).astype(dtype=np.bool)
         else:
             S = np.equal(np.reshape(labels, [size, 1]), np.reshape(labels, [1, size]))
+
 
         S = S * 2.0 - 1.0
 
@@ -401,7 +414,7 @@ class Train:
             labels = labels[idx, :]
             H = H[idx,:]
 
-        if self.and_mode:
+        if self.and_mode == 1 or self.and_mode == 2:
             S = np.bitwise_and(np.reshape(labels, [size, 1]),
                                np.reshape(labels, [1, size])).astype(dtype=np.bool)
         else:
@@ -459,7 +472,7 @@ class Train:
 
         R = np.eye(self.cfg.hash_size, self.cfg.hash_size, dtype=np.float32)
 
-        mapd0 = compute_map_fast(H_db, H_q, labels_db, labels_q, and_mode=self.and_mode)
+        mapd0 = compute_map_fast(H_db, H_q, labels_db, labels_q, and_mode=self.and_mode==1, weighted_mode = self.and_mode == 2)
         step = 1.0
 
         worker_count = 1
@@ -480,7 +493,7 @@ class Train:
                 newR = np.matmul(R, deltaR)
                 rotated_data = np.matmul(H_db, newR)
                 rotated_data_q = np.matmul(H_q, newR)
-                mapd1 = compute_map_fast(rotated_data, rotated_data_q, labels_db, labels_q, and_mode=self.and_mode)
+                mapd1 = compute_map_fast(rotated_data, rotated_data_q, labels_db, labels_q, and_mode=self.and_mode==1,weighted_mode = self.and_mode == 2)
                 results[w] = (mapd1, newR)
 
             threads = []
@@ -521,8 +534,9 @@ class Train:
             , l_db
             , b_db
             , top_n=self.top_n
-            , and_mode=self.and_mode
-            , force_slow=self.and_mode)
+            , and_mode=self.and_mode == 1
+            , force_slow=self.and_mode== 1
+            , weighted_mode = self.and_mode == 2)
 
         report_string = prefix + ": Test on train: {0}; Test on test: {1}".format(map_train, map_test)
 

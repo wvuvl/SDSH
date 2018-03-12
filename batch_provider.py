@@ -1,11 +1,11 @@
 # Copyright 2017 Stanislav Pidhorskyi
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #  http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ except ImportError:
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
-    def __init__(self, batch_size, items, cycled=True, worker=16, imagenet=False, width=224, height=224):
+    def __init__(self, batch_size, items, cycled=True, worker=16, imagenet=False, width=224, height=224,lmdb_file = None):
         self.items = items
         shuffle(self.items)
         self.batch_size = batch_size
@@ -58,8 +58,13 @@ class BatchProvider:
         except:
             self.jpeg = type(items[0][1]) is str
 
+
+
         if self.jpeg:
-            self.env = lmdb.open('data/imagenet/imagenet' if imagenet else 'data/nus_wide/nuswide', map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
+            lmdbDir = 'data/imagenet/imagenet' if imagenet else 'data/nus_wide/nuswide'
+            if lmdb_file is not None:
+                lmdbDir = lmdb_file
+            self.env = lmdb.open(lmdbDir, map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
 
 
     def get_batches(self):
@@ -128,9 +133,11 @@ class BatchProvider:
                 with self.env.begin() as txn:
 
                     buf = txn.get(item[1].encode('ascii'))
+                    if buf is None:
+                        print(item[1].encode('ascii'))
                     buffer.seek(0)
                     buffer.write(buf)
-                    buffer.seek(0) 
+                    buffer.seek(0)
                     image = misc.imread(buffer, mode='RGB')
                     #misc.imsave(str(i) + "_" + str(item[0])+ "test.jpg", image)
 
