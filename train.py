@@ -544,8 +544,9 @@ class Train:
             file.write(report_string + "\n")
         self.logger.info(report_string)
 
-        output = open(os.path.join(directory, "pr_curve.pkl"), 'wb')
-        pickle.dump(curve, output)
-        output.close()
+        if curve is not None:
+            output = open(os.path.join(directory, "pr_curve.pkl"), 'wb')
+            pickle.dump(curve, output)
+            output.close()
 
         return map_train, map_test
