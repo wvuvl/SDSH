@@ -161,10 +161,12 @@ cdef __calc_map_weighted(np.int32_t[:,::1] order,np.int32_t[:,::1] labels_train,
     cdef int rel
     cdef np.float32_t acg
 
+
+
     for q in range(Q):
         relCount = 0
         ap = <float>0.0
-        for i in range(N):
+        for i in range(100):
             index = order[q,i]
             rel = __builtin_popcount(labels_train[index,0]&labels_test[q,0])
 
@@ -181,7 +183,7 @@ cdef __calc_map_weighted(np.int32_t[:,::1] order,np.int32_t[:,::1] labels_train,
             ap /= relCount
             map += ap
     map /= Q
-    return map
+    return map,None
 
 
 

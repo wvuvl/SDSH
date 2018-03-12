@@ -18,6 +18,7 @@ import pickle
 from mean_average_precision import compute_map
 from mean_average_precision import compute_map_fast
 from utils import cifar10_reader
+import time
 
 def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n = 0, and_mode=False, force_slow=False, testOnTrain=False,weighted_mode = False):
     """Evaluate MAP. Hardcoded numbers for CIFAR10 case. 1000 images per category, i.e. in total 10000 images,
@@ -42,7 +43,10 @@ def evaluate(l_train, hashes_train, l_test, hashes_test, l_db, hashes_db, top_n 
            labels_train[-1000:], top_n=top_n, and_mode=and_mode, force_slow=force_slow)
         #print("Test on train " + str(map_train))
 
+    pretime = time.perf_counter()
     map_test, curve = compute_map(hashes_database, hashes_test, labels_database, labels_test, top_n=top_n, and_mode=and_mode, force_slow=and_mode,weighted_mode = weighted_mode)
+    posttime = time.perf_counter()
+    print('time taken {}'.format(posttime-pretime))
     #print("Test on test " + str(map_test))
     return map_train, map_test, curve
 
