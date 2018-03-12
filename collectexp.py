@@ -66,7 +66,7 @@ def main():
                 l = sorted(l)
                 for hs in l:
                     if type in exp_dict[name][hs]:
-                        print("%s, %d, %s" % (name, hs, exp_dict[name][hs][type]))
+                        print("%s, %2d, %s" % (name, hs, exp_dict[name][hs][type]))
 
 if __name__ == '__main__':
     main()
