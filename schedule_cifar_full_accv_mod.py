@@ -12,7 +12,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 24,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 16,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 32,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 48,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 4,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         {
             "loss": "loss_accv_mod",
             "hash_size": 8,
-            "margin": 2.0,
+            "margin": 0.5,
             "batch_size": 150,
             "total_epoch_count": 50,
             "number_of_epochs_per_decay": 10.0,
