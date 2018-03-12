@@ -36,10 +36,10 @@ class Reader:
             self.items = items
         else:
             if train:
-                self.__read_batch('train-labels.idx1-ubyte', 'train-images.idx3-ubyte', 60000)
+                self.__read_batch('train-labels-idx1-ubyte', 'train-images-idx3-ubyte', 60000)
 
             if test:
-                self.__read_batch('t10k-labels.idx1-ubyte', 't10k-images.idx3-ubyte', 10000)
+                self.__read_batch('t10k-labels-idx1-ubyte', 't10k-images-idx3-ubyte', 10000)
 
     def __read_batch(self, batch_label, batch_images, n):
         """Read MNIST binary batch using mmap"""
