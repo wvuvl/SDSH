@@ -313,7 +313,7 @@ class Train:
 
         self.logger.info("Start generating hashes")
 
-        longints = self.and_mode == 0
+        longints = self.and_mode == 1
 
         lmdb_file = "./data/mirf" if self.cfg.dataset == "mirflickr" else None
 
