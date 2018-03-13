@@ -24,7 +24,7 @@ cdef extern int __builtin_popcount(unsigned int) nogil
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef __calc_map(np.int32_t[:,::1] order, np.int8_t[:,::1] labels_train, np.int8_t[:,::1] labels_test, int top_n):
+cdef __calc_map(np.int32_t[:,::1] order, np.int32_t[:,::1] labels_train, np.int32_t[:,::1] labels_test, int top_n):
     """compute mean average precision (MAP)"""
 
     cdef np.float32_t map = <float>0.0
@@ -168,14 +168,14 @@ cdef __calc_map_weighted(np.int32_t[:,::1] order,np.int32_t[:,::1] labels_train,
         ap = <float>0.0
         for i in range(100):
             index = order[q,i]
-            rel = __builtin_popcount(labels_train[index,0]&labels_test[q,0])
+            rel = __popcnt(labels_train[index,0]&labels_test[q,0])
 
             if (rel > 0):
                 relCount += 1
                 acg = rel
                 for n in range(i-1,0,-1):
                     index = order[q,n]
-                    acg += __builtin_popcount(labels_train[index,0]&labels_test[q,0])
+                    acg += __popcnt(labels_train[index,0]&labels_test[q,0])
                 acg/= i+1
 
                 ap+= acg
@@ -208,7 +208,7 @@ def calc_map(order, labels_train, labels_test, top_n, and_mode,weighted_mode = F
         labels_testL, labels_testH = labeles_to_two_64bword(labels_test)
         return __calc_map_and(order.astype(np.int32), labels_trainL, labels_trainH, labels_testL, labels_testH, top_n)
     elif not weighted_mode:
-        return __calc_map(order.astype(np.int32), labels_train.astype(np.int8), labels_test.astype(np.int8), top_n)
+        return __calc_map(order.astype(np.int32), labels_train.astype(np.int32), labels_test.astype(np.int32), top_n)
     else:
         return __calc_map_weighted(order.astype(np.int32),labels_train.astype(np.int32),labels_test.astype(np.int32))
 
