@@ -6,6 +6,7 @@ import skimage.io
 import numpy as np
 from threading import Thread
 from collections import defaultdict
+import os.path 
 
 MAX_RETRY = 3
 
@@ -82,6 +83,13 @@ def download( urls,
             logger.info("[weird] line #{0}" .format(line_num))
             continue
     
+        im_dir, im_name = name.split("Flickr\\")[1].split("\\")
+        
+        im_loc = os.path.join(im_dir, im_name)
+        save_path = os.path.join(args.save_dir, im_loc)
+        if os.path.isfile(save_path):
+            continue
+        
         if url_m == "null":
             # there is no image url
             counter["no_url"] += 1
@@ -106,12 +114,9 @@ def download( urls,
             logger.info("[NA] line #{0}" .format(line_num))
             continue
 
-        im_dir, im_name = name.split("Flickr\\")[1].split("\\")
         if not os.path.exists(os.path.join(args.save_dir, im_dir)):
             os.makedirs(os.path.join(args.save_dir, im_dir))
         
-        im_loc = os.path.join(im_dir, im_name)
-        save_path = os.path.join(args.save_dir, im_loc)
         skimage.io.imsave(save_path, im)
 
 
