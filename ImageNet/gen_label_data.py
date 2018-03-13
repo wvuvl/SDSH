@@ -59,8 +59,8 @@ for id, label, filename in content:
 for i in range(len(validation_images)):
     v = val_labels[i]
     f = validation_images[i]
-    #if v in valid_labels:
-    #    #items_test.append((v, f))
+    if v in valid_labels:
+        items_test.append((v, f))
 
 categorized = {val: [] for (key, val) in filenames.items()}
 
@@ -72,8 +72,7 @@ for im in images:
 for (f, c) in categorized.items():
     shuffle(c)
     items_train += c[:100]
-    items_test += c[100:150]
-    items_database += c[150:]
+    items_database += c
 
 print("Count of test items: {0}".format(len(items_test)))
 print("Count of train items: {0}".format(len(items_train)))
