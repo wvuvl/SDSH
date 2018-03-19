@@ -36,13 +36,15 @@ except ImportError:
 
 class BatchProvider:
     """All in memory batch provider for small datasets that fit RAM"""
-    def __init__(self, batch_size, items, cycled=True, worker=16, imagenet=False, width=224, height=224,lmdb_file = None):
+    def __init__(self, batch_size, items, cycled=True, worker=16, width=224, height=224, lmdb_file=None):
         self.items = items
         shuffle(self.items)
         self.batch_size = batch_size
 
         self.current_batch = 0
         self.cycled = cycled
+        if self.cycled:
+            worker = 1
         self.done = False
         self.image_size = (width, height)
         self.lock = Lock()
@@ -54,17 +56,13 @@ class BatchProvider:
         logging.debug("Batches per epoch: {0}", self.batches_n)
 
         try:
-            self.jpeg = type(items[0][1]) is str or type(items[0][1]) is unicode
+            self.using_lmdb = type(items[0][1]) is str or type(items[0][1]) is unicode
         except:
-            self.jpeg = type(items[0][1]) is str
+            self.using_lmdb = type(items[0][1]) is str
 
-
-
-        if self.jpeg:
-            lmdbDir = 'data/imagenet/imagenet' if imagenet else 'data/nus_wide/nuswide'
-            if lmdb_file is not None:
-                lmdbDir = lmdb_file
-            self.env = lmdb.open(lmdbDir, map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
+        if self.using_lmdb:
+            assert(lmdb_file)
+            self.env = lmdb.open(lmdb_file, map_size=8 * 1024 * 1024 * 1024, subdir=True, readonly=True, lock=False)
 
 
     def get_batches(self):
@@ -127,8 +125,15 @@ class BatchProvider:
         for i in range(self.batch_size):
             item = items[cb * self.batch_size + i]
 
-            if not self.jpeg:
+            if not self.using_lmdb and len(item[1].shape) == 1:
+                image = item[1]
+            elif not self.using_lmdb:
                 image = misc.imresize(item[1], self.image_size, interp='bilinear')
+
+                # Similar to DVSQ https://github.com/caoyue10/cvpr17-dvsq/blob/master/net.py#L122
+                if self.cycled:
+                    if random.random() > 0.5:
+                        image = np.fliplr(image)
             else:
                 with self.env.begin() as txn:
 
@@ -152,10 +157,10 @@ class BatchProvider:
                     starty = starty // 2
                 image = image[starty:starty + self.image_size[1], startx:startx + self.image_size[0]]
 
-            # Similar to DVSQ https://github.com/caoyue10/cvpr17-dvsq/blob/master/net.py#L122
-            if self.cycled:
-                if random.random() > 0.5:
-                    image = np.fliplr(image)
+                # Similar to DVSQ https://github.com/caoyue10/cvpr17-dvsq/blob/master/net.py#L122
+                if self.cycled:
+                    if random.random() > 0.5:
+                        image = np.fliplr(image)
 
             b_images.append(image)
             b_labels.append([item[0]])
