@@ -32,13 +32,20 @@ def __get_triplets(batch_size, ids, boolean_mask):
     return triplets
 
 
-def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_mask = None):
+def loss_accv(embedding, indices_q, indices_p, indices_n, hash_size=24, batch_size=128, margin=1.0):
     """Loss from the paper\"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\""""
     with tf.name_scope('loss') as scope:
-        bibj = tf.matmul(embedding, embedding, transpose_b=True)
-        distance = bibj / 2.0 #Qij
-        negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
-        dqmp = distance - negative_distance
+        q = tf.gather(embedding, indices_q)
+        p = tf.gather(embedding, indices_p)
+        n = tf.gather(embedding, indices_n)
+
+        bibj = tf.reduce_sum(tf.multiply(q, p), 1)
+        distance_qp = bibj / 2.0
+
+        bibj = tf.reduce_sum(tf.multiply(q, n), 1)
+        distance_qn = bibj / 2.0
+
+        dqmp = distance_qp - distance_qn
 
         arg = dqmp - margin
 
@@ -53,70 +60,84 @@ def loss_accv(embedding, ids, hash_size=24, batch_size=150, margin=12, boolean_m
         # eta = 100, but used with additional multiplier 2
         # 2 * eta * N / T / N = 2 * 100 / 22500 = 0.00888
 
-        triplets = __get_triplets(batch_size, ids, boolean_mask)
-        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) + 0.00888 * binarization_regularizer
-        return loss
+        loss = tf.reduce_mean(basic_loss) + 0.00888 * binarization_regularizer
+        return loss, basic_loss
 
 
-def loss_accv_mod(embedding, ids, hash_size=24, batch_size=150, margin=0.5, boolean_mask = None):
+def loss_accv_mod(embedding, indices_q, indices_p, indices_n, hash_size=24, batch_size=128, margin=1.0):
     """Modified loss from the paper
     \"Deep Supervised Hashing with Triplet Labels. Xiofang Wang, Yi Shi, Kris M. Kitani\"
     Removed binarization regularizer
     """
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
-        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
-        distance = bibj / 2.0
-        negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
-        dqmp = distance - negative_distance
+        q = tf.gather(embedding, indices_q)
+        p = tf.gather(embedding, indices_p)
+        n = tf.gather(embedding, indices_n)
 
-        triplets = __get_triplets(batch_size, ids, boolean_mask)
+        bibj = tf.reduce_sum(tf.multiply(q, p), 1)
+        distance_qp = bibj / 2.0
+
+        bibj = tf.reduce_sum(tf.multiply(q, n), 1)
+        distance_qn = bibj / 2.0
+
+        dqmp = distance_qp - distance_qn
 
         arg = (dqmp - margin)
         arg *= hash_size
 
         basic_loss = tf.maximum(-arg, 0) + tf.log(1.0 + tf.exp(-tf.abs(arg)))
-        loss = tf.reduce_sum(triplets * basic_loss) / tf.reduce_sum(triplets) / hash_size
-        return loss
+        loss = tf.reduce_mean(basic_loss) / hash_size
+        return loss, basic_loss
 
 
-def loss_triplet(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
+def loss_triplet(embedding, indices_q, indices_p, indices_n, hash_size=24, batch_size=128, margin=1.0):
     """Regular triplet loss
     Removed binarization regularizer
     """
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
-        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
+        q = tf.gather(embedding_norm, indices_q)
+        p = tf.gather(embedding_norm, indices_p)
+        n = tf.gather(embedding_norm, indices_n)
 
         # squared euclidian distance
         # ||bi - bj|| = (bi - bj)^2 = bi^2 - 2 * bj^2 = 2 - 2 * bi * bj
         # bi^2 == 1 and because bi are normalized
-        distance = 2.0 - 2.0 * bibj
+        bibj = tf.reduce_sum(tf.multiply(q, p), 1)
+        distance_qp = -2.0 * bibj
 
-        negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
-        dqmp = distance - negative_distance
+        bibj = tf.reduce_sum(tf.multiply(q, n), 1)
+        distance_qn = -2.0 * bibj
 
-        triplets = __get_triplets(batch_size, ids, boolean_mask)
+        dqmp = distance_qp - distance_qn
 
-        basic_loss = triplets * tf.maximum(dqmp + margin, 0.0)
+        basic_loss = tf.maximum(dqmp + margin, 0.0)
         loss = tf.reduce_mean(basic_loss)
-        return loss
+        return loss, basic_loss
 
 
-def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
+def loss_spring(embedding, indices_q, indices_p, indices_n, hash_size=24, batch_size=128, margin=1.0):
     """"Energy based spring loss"""
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
-        bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
-
         # squared euclidian distance
         # ||bi - bj|| = (bi - bj)^2 = bi^2 - 2 * bj^2 = 2 - 2 * bi * bj
         # bi^2 == 1 and because bi are normalized
-        distance = -2.0 * bibj
 
-        negative_distance = tf.reshape(distance, [batch_size, 1, batch_size])
-        dqmp = distance - negative_distance
-        triplets = __get_triplets(batch_size, ids, boolean_mask)
+        q = tf.gather(embedding_norm, indices_q)
+        p = tf.gather(embedding_norm, indices_p)
+        n = tf.gather(embedding_norm, indices_n)
+
+        print(embedding_norm.get_shape())
+
+        bibj = tf.reduce_sum(tf.multiply(q, p), 1)
+        distance_qp = -2.0 * bibj
+
+        bibj = tf.reduce_sum(tf.multiply(q, n), 1)
+        distance_qn = -2.0 * bibj
+
+        dqmp = distance_qp - distance_qn
 
         # strain
         # max_distance - distance. max_distance == 2
@@ -134,20 +155,25 @@ def loss_spring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolea
         E = triplets * (Kp*tf.square(twol+alpha-d)/(twol+alpha)**2 + C)
 
         """
+        print(dqmp.get_shape())
 
         epsilon = 1e-8
         d = tf.sqrt(4.0 - dqmp + epsilon)
         twol = 8**0.5
 
-        E = triplets * tf.square(twol - d)
+        E = tf.square(twol - d)
 
-        loss = tf.reduce_sum(E) / tf.reduce_sum(triplets)
-        return loss
+        loss = tf.reduce_mean(E)
+        return loss, E
 
-def loss_simplespring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, boolean_mask = None):
+def loss_simplespring(embedding, indices_q, indices_p, indices_n, hash_size=24, batch_size=128, margin=1.0):
     """"Energy based spring loss"""
     embedding_norm = tf.nn.l2_normalize(embedding, 1)
     with tf.name_scope('loss') as scope:
+        q = tf.gather(embedding_norm, indices_q)
+        p = tf.gather(embedding_norm, indices_p)
+        n = tf.gather(embedding_norm, indices_n)
+
         bibj = tf.matmul(embedding_norm, embedding_norm, transpose_b=True)
 
         # squared euclidian distance
@@ -178,7 +204,7 @@ def loss_simplespring(embedding, ids, hash_size=24, batch_size=128, margin=1.0, 
         E = negative_pairs * tf.square(2.0 - d)# + (1.0 - negative_pairs) * distance
 
         loss = tf.reduce_mean(E)
-        return loss
+        return loss, E
 
 """
 def loss2(embedding, ids, HASH_SIZE=24, BATCH_SIZE=128):
