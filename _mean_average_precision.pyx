@@ -168,14 +168,14 @@ cdef __calc_map_weighted(np.int32_t[:,::1] order,np.int32_t[:,::1] labels_train,
         ap = <float>0.0
         for i in range(100):
             index = order[q,i]
-            rel = __popcnt(labels_train[index,0]&labels_test[q,0])
+            rel = __builtin_popcount(labels_train[index,0]&labels_test[q,0])
 
             if (rel > 0):
                 relCount += 1
                 acg = rel
                 for n in range(i-1,0,-1):
                     index = order[q,n]
-                    acg += __popcnt(labels_train[index,0]&labels_test[q,0])
+                    acg += __builtin_popcount(labels_train[index,0]&labels_test[q,0])
                 acg/= i+1
 
                 ap+= acg
