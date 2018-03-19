@@ -8,10 +8,16 @@ import tensorflow as tf
 BATCH_SIZE = 100 # must be a divider of 10000 and 50000
 
 
-def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, longints=False, imagenet=False,lmdb_file =None):
-    bp = batch_provider.BatchProvider(BATCH_SIZE, items, worker=1, cycled=False, imagenet=imagenet,lmdb_file=lmdb_file)
+def gen_hashes(t_images, prob, outputs, sess, items, batch_provider_constructor, longints=False):
+    bp = batch_provider_constructor(items, False, BATCH_SIZE)
 
-    b = np.zeros([len(items), hash_size])
+    if len(outputs.shape) != 2:
+        shape = outputs.get_shape().as_list()[1:]
+        outputs = tf.reshape(outputs, [-1, shape[0] * shape[1] * shape[2]])
+
+    output_size = outputs.shape[1]
+
+    b = np.zeros([len(items), output_size])
 
     if longints:
         l = np.zeros([len(items), 1], dtype=np.object)
@@ -27,14 +33,19 @@ def gen_hashes(t_images, t_labels, outputs, sess, items, hash_size, worker=16, l
         if feed_dict is None:
             break
 
-        result = sess.run(outputs, {t_images: feed_dict["images"]})
+        result = sess.run(outputs, {t_images: feed_dict["images"],
+                                    prob: 1.0,})
 
         b[k: k + BATCH_SIZE] = result
         l[k: k + BATCH_SIZE] = feed_dict["labels"]
 
         k += BATCH_SIZE
 
-    assert(len(b) == k)
-    assert(len(l) == k)
+    if (len(b) != k) or (len(l) != k):
+        print(len(b))
+        print(len(l))
+        print(k)
+        assert(len(b) == k)
+        assert(len(l) == k)
 
     return l, b
