@@ -22,7 +22,7 @@ import tensorflow as tf
 
 class MatConvNet2TF:
     """Reads matconvnet file creates tensorflow graph."""
-    def __init__(self, data_path, input=None, ignore=[], do_debug_print=False):
+    def __init__(self, data_path, input=None, ignore=[], do_debug_print=False, input_latent=None, latent_layer=''):
         data = scipy.io.loadmat(data_path, struct_as_record=False, squeeze_me=True)
         layers = data['layers']
         self.net = {}
@@ -41,6 +41,8 @@ class MatConvNet2TF:
         else:
             self.input = input
 
+        self.input_latent = input_latent
+
         self.layer_types = {
             'conv': self._conv_layer,
             'relu': self._relu_layer,
@@ -48,15 +50,31 @@ class MatConvNet2TF:
             'lrn': self._lrn_layer,
             'normalize': self._lrn_layer,
             'softmax': self._softmax_layer,
+            'dagnn.Conv': self._conv_layer,
+            'dagnn.ReLU': self._relu_layer,
+            'dagnn.Pooling': self._pool_layer,
+            'dagnn.SoftMax': self._softmax_layer,
         }
 
         current = self.input - self.mean
+        current2 = self.input_latent
+
+        latent_started = False
+
         for i, layer in enumerate(layers):
             if layer.name not in ignore:
-                current = self.layer_types[layer.type](current, layer)
+                current = self.layer_types[layer.type](current, layer, False)
                 self.net[layer.name] = current
+            if layer.name == latent_layer:
+                latent_started = True
+            if latent_started:
+                current2 = self.layer_types[layer.type](current2, layer, True)
+                self.net[layer.name + "_2"] = current2
+
         self.output = current
+        self.output2 = current2
         self.weight_decay = tf.add_n(self.weight_decay_losses)
+        self.prob = tf.placeholder_with_default(1.0, shape=())
 
     @staticmethod
     def _convert_pad(pad):
@@ -66,17 +84,17 @@ class MatConvNet2TF:
     def _convert_stride(stride):
         return [1, stride[0], stride[1], 1]
 
-    def _softmax_layer(self, input, layer):
+    def _softmax_layer(self, input, layer, reuse):
         if self.do_debug_print:
             print("{0:6} {1:6}. dim: {2}".format(layer.name, 'softmax', input.get_shape()))
         return tf.nn.softmax(input, name=layer.name)
 
-    def _relu_layer(self, input, layer):
+    def _relu_layer(self, input, layer, reuse):
         if self.do_debug_print:
             print("{0:6} {1:6}. dim: {2}".format(layer.name, 'relu', input.get_shape()))
         return tf.nn.relu(input, name=layer.name)
 
-    def _lrn_layer(self, input, layer):
+    def _lrn_layer(self, input, layer, reuse):
         # depth_radius = (N - 1) / 2; PARAM = [N KAPPA ALPHA BETA]
         n = layer.param[0]
         depth = int((n-1)//2)
@@ -99,8 +117,8 @@ class MatConvNet2TF:
                                                   beta=beta,
                                                   name=layer.name)
 
-    def _conv_layer(self, input, layer):
-        with tf.name_scope(layer.name):
+    def _conv_layer(self, input, layer, reuse):
+        with tf.variable_scope(layer.name, reuse=reuse):
             weights, biases = layer.weights
             biases = biases.reshape(-1)
             output = input
@@ -109,7 +127,7 @@ class MatConvNet2TF:
             #if ((layer.size[:2] == [1, 1]).all() or layer.size[:3] == input.get_shape().as_list()[1:]).all():
             if (np.asarray(weights.shape)[:2] == [1, 1]).all() or \
                     len(weights.shape) == 2 or\
-                    (np.asarray(weights.shape)[:3] == input.get_shape().as_list()[1:]).all():
+                    np.prod(np.asarray(weights.shape)[:3]) == np.prod(input.get_shape().as_list()[1:]):
                 if len(output.shape) != 2:
                     shape = output.get_shape().as_list()[1:]
                     output = tf.reshape(output, [-1, shape[0] * shape[1] * shape[2]])
@@ -145,7 +163,7 @@ class MatConvNet2TF:
                         w.get_shape()))
             return tf.nn.bias_add(output, b, name='add')
 
-    def _pool_layer(self, input, layer):
+    def _pool_layer(self, input, layer, reuse):
         with tf.name_scope(layer.name):
             if (layer.pad != [0, 0, 0, 0]).any():
                 input = tf.pad(input, self._convert_pad(layer.pad), "CONSTANT")
