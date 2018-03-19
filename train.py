@@ -217,6 +217,7 @@ class Train:
                                                  "fc*")
 
             opt = tf.train.GradientDescentOptimizer(lr)
+            #opt = tf.train.MomentumOptimizer(lr, momentum=0.9)
 
             fcn_train_step = opt.minimize(model.loss, global_step=global_step, var_list=weights_fc)
             train_step = opt.minimize(model.loss, global_step=global_step)
@@ -246,7 +247,7 @@ class Train:
             for i in range(start_step, int(cfg.total_epoch_count * num_batches_per_epoch)):
                 feed_dict = next(batches)
 
-                if cfg.freeze and i < 500:
+                if cfg.freeze:# and i < 500:
                     step = fcn_train_step
                 else:
                     step = train_step
@@ -268,6 +269,7 @@ class Train:
                     [merged, model.assignment, step],
                     {
                         model.t_images: feed_dict["images"],
+                        model.prob: 0.5,
                         #model.t_labels: feed_dict["labels"],
                         model.t_boolmask: mask,
                     })
@@ -317,14 +319,14 @@ class Train:
 
         lmdb_file = "./data/mirf" if self.cfg.dataset == "mirflickr" else None
 
-        self.l_train, self.b_train = gen_hashes(model.t_images, model.t_labels,
+        self.l_train, self.b_train = gen_hashes(model.t_images, model.prob, model.t_labels,
                                                 model.output, session, items_train, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
 
-        self.l_test, self.b_test = gen_hashes(model.t_images, model.t_labels,
+        self.l_test, self.b_test = gen_hashes(model.t_images, model.prob, model.t_labels,
                                               model.output, session, items_test, hash_size, 1, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
 
         if len(items_db) > 0:
-            self.l_db, self.b_db = gen_hashes(model.t_images, model.t_labels,
+            self.l_db, self.b_db = gen_hashes(model.t_images, model.prob, model.t_labels,
                                               model.output, session, items_db, hash_size, longints=longints, imagenet=self.cfg.dataset == "imagenet",lmdb_file = lmdb_file)
         else:
             self.l_db, self.b_db = self.l_train, self.b_train
@@ -535,7 +537,7 @@ class Train:
             , b_db
             , top_n=self.top_n
             , and_mode=self.and_mode == 1
-            , force_slow=self.and_mode== 1
+            , force_slow=self.and_mode == 1
             , weighted_mode = self.and_mode == 2)
 
         report_string = prefix + ": Test on train: {0}; Test on test: {1}".format(map_train, map_test)
